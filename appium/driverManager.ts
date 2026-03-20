@@ -1,0 +1,45 @@
+// appium/driverManager.ts
+import { remote } from 'webdriverio';
+import type { Browser } from 'webdriverio';
+
+export function isUia2DeadError(e: unknown): boolean {
+  const msg = (e as any)?.message ?? String(e);
+  return (
+    msg.includes('instrumentation process is not running') ||
+    msg.includes('cannot be proxied to UiAutomator2 server') ||
+    (msg.includes('UiAutomator2 server') && msg.includes('not running'))
+  );
+}
+
+export class DriverManager {
+  private driver: Browser | null = null;
+
+  constructor(private makeRemoteOpts: () => any) {}
+
+  async get(): Promise<Browser> {
+    if (!this.driver) this.driver = await remote(this.makeRemoteOpts());
+    return this.driver;
+  }
+
+  async recreate(): Promise<Browser> {
+    try { await this.driver?.deleteSession(); } catch {}
+    this.driver = await remote(this.makeRemoteOpts());
+    return this.driver;
+  }
+
+  async ensureAlive(): Promise<Browser> {
+    const d = await this.get();
+    try {
+      await d.getPageSource(); // 헬스체크
+      return d;
+    } catch (e) {
+      if (!isUia2DeadError(e)) throw e;
+      return await this.recreate();
+    }
+  }
+
+  async dispose(): Promise<void> {
+    try { await this.driver?.deleteSession(); } catch {}
+    this.driver = null;
+  }
+}

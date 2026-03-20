@@ -1,0 +1,27 @@
+{
+  "name": "playwright",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "apiTest": "playwright test -c api.config.ts --pass-with-no-tests tests/api/apiTest.spec.ts",
+    "test:qa": "playwright test -c qa.config.ts",
+    "test:e2e": "playwright test -c e2e.config.ts",
+    "test:api": "playwright test -c api.config.ts --pass-with-no-tests",
+    "e2e:archive": "node scripts/run_e2e_archive.mjs -c e2e.config.ts",
+    "report:qa": "playwright show-report test-output/reports/qa/latest",
+    "report:e2e": "playwright show-report test-output/reports/latest",
+    "report:api": "playwright show-report test-output/reports/api/latest",
+    "report:latest": "npm run report:e2e"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.3",
+    "typescript": "^5.9.3",
+    "webdriverio": "^9.24.0"
+  }
+}
