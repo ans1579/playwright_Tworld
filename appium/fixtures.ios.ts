@@ -5,7 +5,6 @@ import { DriverManager } from './driverManager';
 
 import { makeIosCaps } from './ios/caps.ios';
 import { APPIUM_HOST, APPIUM_PORT, APPIUM_PATH, IOS_UDID, WDA_LOCAL_PORT } from './ios/env.ios';
-import { hostname } from 'node:os';
 
 type Fixtures = {
     driverManager: DriverManager;
@@ -42,6 +41,8 @@ export const test = base.extend<Fixtures>({
             path: appiumPath,
             capabilities: makeIosCaps(bundleId, { udid, wdaLocalPort }),
             logLevel: 'error',
+            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 120000),
+            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 2),
         }));
 
         // 기존 ensureAlive가 안드로이드 전용이라 보강해서 iOS에서 사용
@@ -65,6 +66,8 @@ export const test = base.extend<Fixtures>({
     
     driver: async ({ driverManager }, use) => {
         const driver = await driverManager.get();
+        // iOS 클릭 후 내부 애니메이션 대기시간을 줄여 전체 템포 개선
+        await (driver as any).updateSettings?.({ animationCoolOffTimeout: 0 }).catch(() => {});
         await use(driver);
     },
 });

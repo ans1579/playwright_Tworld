@@ -220,7 +220,7 @@ export async function swipeUpAos(
     driver: Browser,
     opts?: AosSwipeOpts
 ) {
-    const fromYPct = opts?.fromYPct ?? 0.72;
+    const fromYPct = opts?.fromYPct ?? 0.75;
     const toYPct = opts?.toYPct ?? 0.30;
     const distance = Math.abs(fromYPct - toYPct) || 0.55;
     const durationMs = opts?.durationMs ?? 520;

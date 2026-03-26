@@ -1,9 +1,8 @@
 import { test } from '@appium/fixtures.ios';
 import { iosSelectors as s } from '../../_shared/selectors/ios';
-import { waitVisible, waitNotVisible } from '../../_shared/actions/ui';
+import { safeClick, waitVisible, waitNotVisible } from '../../_shared/actions/ui';
 import { assertScrollable } from '../../_shared/actions/scroll';
 import { IOS_BUNDLE_ID } from '@appium/ios/env.ios.qa';
-import { smartTap } from '../../_shared/gestures/ios';
 
 async function clickWhenVisible(driver: any, selector: string, timeout = 15_000) {
     const el = await waitVisible(driver, selector, timeout);
@@ -30,10 +29,7 @@ test(`QA iOS: Type5 검증_진입 및 스크롤 여부 확인`, async ({ driver 
     await test.step(`1. AI Layer 클릭`, async () => {
         await waitVisible(driver, s.aiLayerBtn, basicTimeoutMs);
 
-        await smartTap(driver, s.aiLayerBtn, {
-            timeoutMs: basicTimeoutMs,
-            fallbackTapPct: { xPct: 0.5, yPct: 0.90 },
-        });
+        await safeClick(driver, s.aiLayerBtn);
     });
 
     await test.step(`2. Type1 우측 하단 MY 클릭`, async () => {

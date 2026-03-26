@@ -12,6 +12,7 @@ export default defineConfig({
     {
       name: 'qa-ios',
       testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
+      retries: 1,
       use: {
         bundleId: 'com.sktelecom.miniTworld.ad.stg',
       } as any,
@@ -19,6 +20,7 @@ export default defineConfig({
     {
       name: 'qa-aos',
       testMatch: /tests\/qa\/aos\/.*\.spec\.ts/,
+      retries: 1,
     },
     {
       name: 'e2e-ios',

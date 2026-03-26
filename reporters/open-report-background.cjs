@@ -19,6 +19,10 @@ class OpenReportBackgroundReporter {
     const reportUrl = `file://${reportIndex.replace(/ /g, '%20')}`;
     const reportPrefix = `file://${path.dirname(reportIndex).replace(/ /g, '%20')}/`;
 
+    // 요구사항:
+    // 1) 리포트 탭이 있으면 그 탭 URL만 갱신
+    // 2) 없으면 백그라운드로만 1회 오픈 (탭 증식 최소화)
+    // 3) 기존 포그라운드 앱 복원 시도
     const script = `
 set reportUrl to "${reportUrl}"
 set reportPrefix to "${reportPrefix}"
@@ -31,9 +35,8 @@ tell application "System Events"
   set chromeRunning to exists (processes where name is "Google Chrome")
 end tell
 
-if chromeRunning then
+on updateExistingReportTab(reportUrl, reportPrefix)
   set reportTabUpdated to false
-
   tell application "Google Chrome"
     repeat with w in windows
       repeat with t in tabs of w
@@ -49,6 +52,17 @@ if chromeRunning then
       if reportTabUpdated then exit repeat
     end repeat
   end tell
+  return reportTabUpdated
+end updateExistingReportTab
+
+if chromeRunning then
+  set reportTabUpdated to my updateExistingReportTab(reportUrl, reportPrefix)
+
+  -- 바로 새 탭을 열지 않고, 잠깐 대기 후 한번 더 기존 탭 탐색
+  if not reportTabUpdated then
+    delay 0.2
+    set reportTabUpdated to my updateExistingReportTab(reportUrl, reportPrefix)
+  end if
 
   if not reportTabUpdated then
     do shell script "open -g -a \\"Google Chrome\\" " & quoted form of reportUrl
@@ -57,6 +71,7 @@ else
   do shell script "open -g -a \\"Google Chrome\\" " & quoted form of reportUrl
 end if
 
+-- 혹시라도 포커스를 가져갔으면 복원 시도
 if previousFrontApp is not "" then
   delay 0.05
   try

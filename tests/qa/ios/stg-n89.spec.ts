@@ -1,6 +1,5 @@
 import { test, expect } from 'appium/fixtures.ios';
 import { tapCellWithScroll } from '@tests/_shared/actions/scroll';
-import { smartTap } from '@tests/_shared/gestures/ios';
 import { isVisible, safeClick, waitVisible } from '@tests/_shared/actions/ui';
 
 // iOS 설정 앱으로 세션 시작
@@ -37,7 +36,7 @@ test(`N89: iOS 알림권한 끄고 AI Layer 진입`, async ({ driver }) => {
         
         const aiBtn = `//XCUIElementTypeButton[@name="MY"]`;
         
-        await smartTap(driver, aiBtn, {fallbackTapPct: {xPct: 0.5, yPct: 0.9}});
+        await safeClick(driver, aiBtn);
     });
 
     const notify = `//XCUIElementTypeStaticText[@name="기기 설정"]`;

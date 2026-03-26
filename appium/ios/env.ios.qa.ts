@@ -1,6 +1,7 @@
 // 단말 UDID, 앱 식별자
-export const IOS_UDID = '00008140-001C09881E80801C'; // 16 프로
-// export const IOS_UDID = '00008030-0009316A2EDA802E'; // 11 프로
+// export const IOS_UDID = '00008140-001C09881E80801C'; // 재형님 16 프로
+export const IOS_UDID = '00008030-0009316A2EDA802E'; // 11 프로
+// export const IOS_UDID = `00008140-000C39E22180801C`; // 주 티벨의 16 프로
 export const IOS_BUNDLE_ID = process.env.IOS_BUNDLE_ID ?? 'com.sktelecom.miniTworld.ad.stg';
 
 // WDA 포트 (단말 1 대 1 분리)

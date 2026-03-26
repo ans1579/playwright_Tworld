@@ -25,6 +25,18 @@ export function makeIosCaps(bundleId: string, overrides: IosCapsOverrides = {}) 
 
     // ✅ 단말 1:1 포트 분리 핵심
     'appium:wdaLocalPort': wdaLocalPort,
+    'appium:useNewWDA': false,
+    'appium:wdaStartupRetries': 2,
+    'appium:wdaStartupRetryInterval': 10000,
+    'appium:wdaConnectionTimeout': 120000,
+
+    // ✅ 속도 튜닝 (iOS 대기시간 단축)
+    // 앱 애니메이션/idle 대기 시간을 줄여 클릭 간 템포를 빠르게 함
+    'appium:waitForQuiescence': false,
+    'appium:waitForIdleTimeout': 1,
+    'appium:wdaEventloopIdleDelay': 0,
+    'appium:disableAutomaticScreenshots': true,
+    'appium:simpleIsVisibleCheck': true,
   };
   return caps;
 }

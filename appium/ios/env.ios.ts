@@ -2,7 +2,8 @@
 
 // 단말 UDID, 앱 식별자
 export const IOS_UDID_1 = process.env.IOS_UDID_1 ?? '00008140-001C09881E80801C'; // 16 프로
-export const IOS_UDID_2 = process.env.IOS_UDID_2 ?? '';
+export const IOS_UDID_2 = process.env.IOS_UDID_2 ?? '00008030-0009316A2EDA802E'; // 11 프로
+// export const IOS_UDID_2 = process.env.IOS_UDID_2 ?? '00008140-000C39E22180801C';
 export const IOS_UDID = IOS_UDID_1;
 export const IOS_BUNDLE_ID = process.env.IOS_BUNDLE_ID ?? 'com.sktelecom.TIDApp';
 

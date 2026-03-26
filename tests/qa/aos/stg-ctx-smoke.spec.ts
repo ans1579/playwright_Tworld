@@ -1,28 +1,45 @@
 import { test } from '@appium/fixtures.aos';
 import { APP_PACKAGE } from '@appium/aos/env.aos';
 import { getAndSwitchToWebviewAos } from '@tests/_shared/actions/webview';
+import { isVisible, safeClick } from '@tests/_shared/actions/ui';
 
+const tworld = `com.sktelecom.minit`;
+test.use({appPackage: tworld, appActivity: `com.sktelecom.minit.scene.main.MainActivity`});
 test(`AOS: 웹뷰 및 네이티브 전환 확인 테스트`, async ({ driver }) => {
     const basicTimeoutMs = 12_000;
 
     await test.step(`0. 앱 재실행`, async () => {
-        try { await driver.terminateApp(APP_PACKAGE) } catch {}
-        await driver.activateApp(APP_PACKAGE);
+        // 다른 패키지(STG) 백그라운드 웹뷰가 컨텍스트에 섞이지 않도록 정리
+        if (APP_PACKAGE.toLowerCase() !== tworld.toLowerCase()) {
+            try { await driver.terminateApp(APP_PACKAGE); } catch {}
+        }
+        try { await driver.terminateApp(tworld) } catch {}
+        await driver.activateApp(tworld);
         await driver.pause(300);
+        if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
+            await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
+        }
     });
 
     await test.step(`1. Ai Layer 클릭`, async () => {
         await driver.pause(3_000);
-        const aiBtn = await driver.$(`//android.view.View[@resource-id="Com.sktelecom.minit.ad.stg:id/centerButton"]`);
+        const aiBtn = await driver.$(`//android.widget.TextView[@resource-id="com.sktelecom.minit:id/buttonTextView" and @text="메뉴"]`);
         await aiBtn.waitForDisplayed({ timeout: basicTimeoutMs });
         await aiBtn.click();
         await driver.pause(3_000);
     });
 
     await test.step(`2. 웹뷰 전환`, async () => {
-        const web = await getAndSwitchToWebviewAos(driver, 3000);
-        
-        console.log(`FoundCtx :: ${web}`);
+        const ctxs = (await driver.getContexts()) as string[];
+        console.log('[contexts]', ctxs);
+
+        const webview = ctxs.find((ctx) => ctx.startsWith('WEBVIEW'));
+        if (!webview) {
+            throw new Error(`WEBVIEW context 없음: ${JSON.stringify(ctxs)}`);
+        }
+
+        const switched = await getAndSwitchToWebviewAos(driver, 0, tworld);
+        console.log('[switched]', switched);
         console.log(`ChangedCtx :: ${await driver.getContext()}`);
         await driver.pause(3000);
     });

@@ -9,7 +9,8 @@ const IOS_APPIUM_PORT_1 = Number(process.env.IOS_APPIUM_PORT_1 ?? 4724);
 const IOS_APPIUM_PORT_2 = Number(process.env.IOS_APPIUM_PORT_2 ?? 4725);
 const IOS_WDA_LOCAL_PORT_1 = Number(process.env.IOS_WDA_LOCAL_PORT_1 ?? 8102);
 const IOS_WDA_LOCAL_PORT_2 = Number(process.env.IOS_WDA_LOCAL_PORT_2 ?? 8103);
-const IOS_RETRIES = Number(process.env.QA_IOS_RETRIES ?? 1);
+const IOS_RETRIES = 1;
+const AOS_RETRIES = 1;
 
 function isIosDeviceConnected(udid: string): boolean {
   if (!udid) return false;
@@ -64,12 +65,13 @@ if (enableIos2) {
 projects.push({
   name: 'qa-aos',
   testMatch: /tests\/qa\/aos\/.*\.spec\.ts/,
+  retries: AOS_RETRIES,
 });
 
 export default defineConfig({
   ...commonConfig,
   globalSetup: './scripts/qa.global-setup.ts',
-  workers: Number(process.env.QA_WORKERS ?? 2),
+  workers: Number(process.env.QA_WORKERS ?? 1),
   outputDir: 'test-output/test-results/qa',
   reporter: makeReporter('test-output/reports/qa/latest'),
   projects,

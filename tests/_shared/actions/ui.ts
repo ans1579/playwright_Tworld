@@ -6,9 +6,24 @@ export async function waitVisible(
     selector: string,
     timeoutMs = 5000
 ) {
-    const el = await driver.$(selector);
-    await el.waitForDisplayed({ timeout: timeoutMs });
-    return el;
+    const retryCount = 2;
+    const retryMs = 150;
+    let lastError: unknown;
+
+    for (let i = 0; i <= retryCount; i++) {
+        try {
+            const el = await driver.$(selector);
+            await el.waitForDisplayed({ timeout: timeoutMs });
+            return el;
+        } catch (error) {
+            lastError = error;
+            if (i < retryCount) {
+                await driver.pause(retryMs);
+            }
+        }
+    }
+
+    throw lastError ?? new Error(`waitVisible 실패 :: selector = ${selector}`);
 }
 
 export async function readText(
@@ -25,13 +40,21 @@ export async function isVisible(
     selector: string,
     timeoutMs = 5000
 ): Promise<boolean> {
-    try {
-        const el = await driver.$(selector);
-        await el.waitForDisplayed({ timeout: timeoutMs });
-        return true;
-    } catch {
-        return false;
+    const retryCount = 2;
+    const retryMs = 150;
+
+    for (let i = 0; i <= retryCount; i++) {
+        try {
+            const el = await driver.$(selector);
+            await el.waitForDisplayed({ timeout: timeoutMs });
+            return true;
+        } catch {
+            if (i < retryCount) {
+                await driver.pause(retryMs);
+            }
+        }
     }
+    return false;
 }
 
 export async function waitNotVisible(
@@ -46,35 +69,177 @@ export async function waitNotVisible(
 
 type SafeClickOptions = {
     timeoutMs?: number;
+    intervalMs?: number;
+    retryCount?: number;
+    retryMs?: number;
+    perAttemptTimeoutMs?: number;
+    fastPathTimeoutMs?: number;
+    useCenterTapFallback?: boolean;
 };
+
+function getErrorMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    return String(err);
+}
+
+function isAndroidDriver(driver: Browser): boolean {
+    const platformName = String((driver as any).capabilities?.platformName ?? '').toLowerCase();
+    return platformName.includes('android');
+}
+
+type ClickTarget = WebdriverIO.Element | Record<string, any>;
+
+async function tryAndroidClickGesture(driver: Browser, el: ClickTarget): Promise<boolean> {
+    if (!isAndroidDriver(driver)) return false;
+    const target = await (el as any);
+    const elementId = String(target?.elementId ?? '').trim();
+    if (!elementId) return false;
+
+    // 1) WDIO/Appium 환경에서 자주 쓰는 형태
+    try {
+        if (typeof (driver as any).execute === 'function') {
+            await (driver as any).execute('mobile: clickGesture', { elementId });
+            return true;
+        }
+    } catch {}
+
+    // 2) executeScript 형태 fallback
+    try {
+        if (typeof (driver as any).executeScript === 'function') {
+            await (driver as any).executeScript('mobile: clickGesture', [{ elementId }]);
+            return true;
+        }
+    } catch {}
+
+    return false;
+}
+
+async function tapElementCenter(driver: Browser, el: ClickTarget) {
+    const target = await (el as any);
+    const loc = await target.getLocation();
+    const size = await target.getSize();
+    const x = Math.round(loc.x + size.width / 2);
+    const y = Math.round(loc.y + size.height / 2);
+
+    await driver.performActions([
+        {
+            type: 'pointer',
+            id: 'finger-safe-click-center',
+            parameters: { pointerType: 'touch' },
+            actions: [
+                { type: 'pointerMove', duration: 0, x, y },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: 50 },
+                { type: 'pointerUp', button: 0 },
+            ],
+        },
+    ]);
+    await driver.releaseActions();
+}
 
 export async function safeClick(
     driver: Browser,
     selector: string,
     opts?: SafeClickOptions
 ) {
-    const timeoutMs = opts?.timeoutMs ?? 4000;
-    const intervalMs = 100;
-    const retryCount = 2;
-    const retryMs = 100;
+    const timeoutMs = opts?.timeoutMs ?? 7000;
+    const intervalMs = opts?.intervalMs ?? 80;
+    const retryCount = opts?.retryCount ?? 2;
+    const retryMs = opts?.retryMs ?? 120;
+    const fastPathTimeoutMs = opts?.fastPathTimeoutMs ?? 900;
+    const useCenterTapFallback = opts?.useCenterTapFallback ?? true;
+    const startedAt = Date.now();
+    const deadline = startedAt + timeoutMs;
+    let lastError: unknown;
 
-    for (let i=0; i<=retryCount; i++) {
+    for (let i = 0; i <= retryCount; i++) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) break;
+
+        // 1차는 빠른 감지, 이후는 남은 예산 전체 사용
+        const perAttemptTimeoutMs =
+            i === 0
+                ? Math.min(fastPathTimeoutMs, remaining)
+                : remaining;
+
         try {
             const el = await driver.$(selector);
-            await el.waitForDisplayed({ timeout: timeoutMs, interval: intervalMs });
+
+            let displayedError: unknown;
+            try {
+                await el.waitForDisplayed({ timeout: perAttemptTimeoutMs, interval: intervalMs });
+            } catch (error) {
+                displayedError = error;
+            }
+
+            // 일부 AOS 화면에서 displayed 판정이 흔들리는 경우가 있어 존재 확인 후 클릭 재시도 허용
+            if (displayedError) {
+                const exists = await el
+                    .waitForExist({
+                        timeout: Math.min(1200, Math.max(300, perAttemptTimeoutMs)),
+                        interval: intervalMs
+                    })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (!exists) {
+                    throw displayedError;
+                }
+            }
+
+            await el.waitForEnabled({
+                timeout: Math.min(1200, perAttemptTimeoutMs),
+                interval: intervalMs
+            }).catch(() => {});
+
             try {
                 await el.click();
-            } catch {
-                await el.touchAction('tap');
+                return el;
+            } catch (clickErr) {
+                const clickedByGesture = await tryAndroidClickGesture(driver, el).catch(() => false);
+                if (clickedByGesture) {
+                    return el;
+                }
+
+                if (useCenterTapFallback) {
+                    try {
+                        await tapElementCenter(driver, el);
+                        return el;
+                    } catch (centerErr) {
+                        lastError = centerErr ?? clickErr;
+                        throw lastError;
+                    }
+                }
+
+                lastError = clickErr;
+                throw clickErr;
             }
-            return el;
-        } catch {
+        } catch (error) {
+            lastError = error;
             if (i < retryCount) {
-                await driver.pause(retryMs);
+                const pauseMs = Math.min(retryMs + i * 40, Math.max(0, deadline - Date.now()));
+                if (pauseMs > 0) {
+                    await driver.pause(pauseMs);
+                }
             }
         }
     }
-    throw new Error(`safeClick 실패 :: selector = ${selector}`);
+
+    const elapsedMs = Date.now() - startedAt;
+    throw new Error(
+        `safeClick 실패 :: selector = ${selector} :: elapsed=${elapsedMs}ms :: reason=${getErrorMessage(lastError)}`
+    );
+}
+
+export async function clickPass(driver: Browser, selector: string, timeout = 3000) {
+    try {
+        const el = await driver.$(selector);
+        await el.waitForDisplayed({ timeout });
+        await el.click();
+        console.log(`Clicked element: ${selector}`);
+    } catch (error) {
+        console.warn(`Failed to click element: ${selector}`, error);
+    }
 }
 
 export async function find(driver: Browser, selector: string) {

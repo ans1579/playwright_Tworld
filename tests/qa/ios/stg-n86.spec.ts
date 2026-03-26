@@ -1,7 +1,6 @@
 import { test, expect } from '@appium/fixtures.ios';
 import { assertScrollable } from '@tests/_shared/actions/scroll';
 import { getHorizontal, getVertical, isVisible, safeClick } from '@tests/_shared/actions/ui';
-import { smartTap } from '@tests/_shared/gestures/ios';
 import { getAndSwitchToWebviewIos } from '@tests/_shared/actions/webview';
 
 const TWD = `com.sktelecom.miniTworld.ad.stg`;
@@ -19,7 +18,7 @@ test(`N86: iOS Type1 화면 진입, 스크롤링 및 닫힘 확인`, async ({ dr
 
     await test.step(`1. AI Layer 진입 및 웹뷰 전환`, async () => {
         const aiBtn = `//XCUIElementTypeButton[@name="MY"]`;
-        await smartTap(driver, aiBtn, {fallbackTapPct: {xPct: 0.5, yPct: 0.9}});
+        await safeClick(driver, aiBtn);
         const target = await getAndSwitchToWebviewIos(driver, 2000);
         console.log('TargetWebview : ' + target);
         await driver.pause(2000);
