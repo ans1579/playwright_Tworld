@@ -312,8 +312,7 @@ test.describe(`Native iOS 018`, () => {
         await driver.pause(3000);
         await swipeByPercent(
         driver,
-        {xPct: 0.5, yPct: 0.75},
-        {xPct: 0.5, yPct: 0.40},
+        {xPct: 0.5, yPct: 0.75},        {xPct: 0.5, yPct: 0.40},
         );
         await tapCellWithScroll(driver, `//XCUIElementTypeStaticText[@name="매장 찾기"]`);
         if (await isVisible(driver, `//XCUIElementTypeStaticText[@name="외부 페이지로 연결되며, 데이터 무제한 요금제가 아닐 경우 데이터가 차감됩니다."]`)) {
