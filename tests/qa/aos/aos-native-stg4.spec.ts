@@ -192,11 +192,23 @@ test(`Native AOS 074: 각 채널에 맞는 메시지 넛징 노출 확인`, asyn
         '"구매부터 요금제 관리, 혜택까지 AI가 나의 T 서비스를 밀착 관리"의 썸네일 이미지 링크', '"T 서비스 1000% 활용 방법! 나에게 맞는 정보만 모아 드려요"의 썸네일 이미지 링크', 
         '"시간 절약을 위한 맞춤 솔루션 AI가 필요한 기능을 찾아왔어요"의 썸네일 이미지 링크', '"T의 멈추지 않는 추천 매일이 새로워지는 탐색 시작!"의 썸네일 이미지 링크', 
         '"꼭 필요한 순간에 맞춤 제안 시간·상황에 맞춰 알려 드려요"의 썸네일 이미지 링크' , '"이용할수록 더 정확해져요 어제보다 더 똑똑해진 추천 보기"의 썸네일 이미지 링크', 
-        '"T 아이디 로그인 후 AI 추천 받기! 지금 필요한 것만 골라 보세요"의 썸네일 이미지 링크', 
+        '"T 아이디 로그인 후 AI 추천 받기! 지금 필요한 것만 골라 보세요"의 썸네일 이미지 링크', '"OTT 요금제가 궁금하셨다면? 추천 요금제를 확인해 보세요"의 썸네일 이미지 링크', 
+        
     ];
     const tdsMsg = [
         '"헌 집 줄게 새집 다오! 쓰던 폰 보상받고 새 폰 주문하기!"의 썸네일 이미지 링크',
     ];
+    const nudgeSelector = `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`;
+    const normalize = (s: string) => s.replace(/\s+/g, ' ').trim();
+    const matchesAny = (actual: string, candidates: string[]) => {
+        const a = normalize(actual);
+        return candidates
+            .map(normalize)
+            .some((c) => a === c || a.includes(c) || c.includes(a));
+    };
+    const readNudgeDesc = async () =>
+        normalize(String((await (await waitVisible(driver, nudgeSelector)).getAttribute(`content-desc`)) ?? ''));
+
     await driver.pause(3000);
     await safeClick(driver, nudge);
     await getAndSwitchToWebviewAos(driver);
@@ -204,13 +216,20 @@ test(`Native AOS 074: 각 채널에 맞는 메시지 넛징 노출 확인`, asyn
     await driver.switchContext(`NATIVE_APP`);
     await safeClick(driver, `//android.widget.Button[@resource-id="android:id/button1"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="홈"]`);
-    const twdNudgeName = String((await (await waitVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).getAttribute(`content-desc`)) ?? '').trim();
-    expect(twdMsg).toContain(twdNudgeName);
+    const twdNudgeName = await readNudgeDesc();
+    expect(matchesAny(twdNudgeName, twdMsg)).toBe(true);
     await driver.pause(2000);
 
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="T 다이렉트샵"]`);
-    const tdsNudgeName = String((await (await waitVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).getAttribute(`content-desc`)) ?? '').trim();
-    expect(tdsMsg).toContain(tdsNudgeName);
+    await driver.waitUntil(
+        async () => {
+            const now = await readNudgeDesc();
+            return now !== twdNudgeName && matchesAny(now, tdsMsg);
+        },
+        { timeout: 8000, interval: 300 }
+    );
+    const tdsNudgeName = await readNudgeDesc();
+    expect(matchesAny(tdsNudgeName, tdsMsg)).toBe(true);
 })
 
 

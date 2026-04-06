@@ -38,7 +38,7 @@ test(`Native AOS 059: Bottom navi. AI 추천 버튼 비로그인 상태 클릭`,
     // ── AI layer 진입 확인 ─────────────────────────────────────────
     if (await isVisible(driver, `//android.view.View[@content-desc="시작하기"]`)) {
         await safeClick(driver, `//android.view.View[@content-desc="시작하기"]`);
-        await driver.pause(3000);
+        await driver.pause(5000);
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="${TWD}:id/main"]/android.webkit.WebView/android.webkit.WebView`);
     }
     await waitVisible(driver, `//android.widget.Spinner[@text="전체 AI 추천"]`, 15000);

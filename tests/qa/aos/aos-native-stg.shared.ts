@@ -55,9 +55,7 @@ export async function closeIntroIfPresent(driver: Browser) {
     }
 
     if (attempt < maxRestarts) {
-      console.log(
-        `[intro] 취소 버튼 미노출 -> 앱 재시작 후 재시도 (${attempt + 1}/${maxRestarts})`
-      );
+      console.log(`[intro] 취소 버튼 미노출 -> 앱 재시작 후 재시도 (${attempt + 1}/${maxRestarts})`);
       await restartTwdApp(driver, 1500);
     }
   }

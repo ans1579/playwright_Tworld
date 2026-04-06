@@ -6,8 +6,13 @@
   "scripts": {
     "apiTest": "playwright test -c api.config.ts --pass-with-no-tests tests/api/apiTest.spec.ts",
     "test:qa": "playwright test -c qa.config.ts",
+    "test:qa:ios": "playwright test -c qa.config.ts --project=qa-ios",
+    "test:qa:aos": "playwright test -c qa.config.ts --project=qa-aos",
+    "test:qa:ios2": "QA_IOS2_FORCE=1 IOS_UDID_2=00008030-0009316A2EDA802E IOS_APPIUM_PORT_2=4725 playwright test -c qa.config.ts --project=qa-ios-2",
     "test:e2e": "playwright test -c e2e.config.ts",
     "test:api": "playwright test -c api.config.ts --pass-with-no-tests",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "e2e:archive": "node scripts/run_e2e_archive.mjs -c e2e.config.ts",
     "report:qa": "playwright show-report test-output/reports/qa/latest",
     "report:e2e": "playwright show-report test-output/reports/latest",
@@ -21,6 +26,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.2.3",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "webdriverio": "^9.24.0"
   }

@@ -231,9 +231,11 @@ test(`Native AOS 019: 권한 허용 안내에서 [설정] 선택`, async ({ driv
     await driver.back().catch(() => {});
 })
 
+
 test(`Native AOS 020: GPS OFF 상태로 로그인 후 메인 하단 매장찾기 선택`, async ({ driver }) => {
     adbShell(['settings', 'put', 'secure', 'location_mode', '0']); // OFF
     await driver.pause(5000);
+    await safeClick(driver, `//android.widget.Button[@resource-id="android:id/button2"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
     await driver.pause(1000);
     const isLogIn = await driver.$(logout).isDisplayed().catch(() => false);

@@ -96,6 +96,7 @@ export async function defaultBeforeEach(
     await driver.terminateApp(TWD);
   } catch {}
   await driver.activateApp(TWD);
+  await driver.pause(3000);
 
   if (await isVisible(driver, UPGRADE_POPUP)) {
     await safeClick(driver, UPGRADE_NO);

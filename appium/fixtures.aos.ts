@@ -63,8 +63,8 @@ export const test = base.extend<Fixtures>({
             path: APPIUM_PATH,
             capabilities: makeAosCaps({ appPackage, appActivity }),
             logLevel: 'error',
-            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 120000),
-            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 2),
+            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 15000),
+            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 0),
         }));
 
         try {

@@ -38,10 +38,10 @@ export async function readText(
 export async function isVisible(
     driver: Browser,
     selector: string,
-    timeoutMs = 5000
+    timeoutMs = 2000
 ): Promise<boolean> {
-    const retryCount = 2;
-    const retryMs = 150;
+    const retryCount = 1;
+    const retryMs = 100;
 
     for (let i = 0; i <= retryCount; i++) {
         try {
