@@ -2,7 +2,7 @@ import { test, expect } from "@appium/fixtures.ios";
 import { assertScrollable } from "@tests/_shared/actions/scroll";
 import { getHorizontal, getVertical, isVisible, safeClick, waitVisible } from "@tests/_shared/actions/ui";
 import { getAndSwitchToWebviewIos } from "@tests/_shared/actions/webview";
-import { TWD, aiAssert, aiClose, aiBtn, defaultBeforeEach, logout, nudgeMessage, saveFailureScreenshot } from "./ios-native-stg.shared";
+import { SSO_ID, TWD, aiAssert, aiClose, aiBtn, defaultBeforeEach, logout, nudgeMessage, saveFailureScreenshot } from "./ios-native-stg.shared";
 
 test.use({ bundleId: TWD });
 
@@ -136,6 +136,8 @@ test(`Native iOS 068: 준회원 로그인 후 메시지 넛징 선택`, async ({
             await driver.acceptAlert().catch(() => {});
         }
         await safeClick(driver, `//XCUIElementTypeButton[@name="본인 확인된 T ID ansrlwn1579@gmail.com 010-8308-1597 로 로그인"]`);
+    } else {
+        await safeClick(driver, `//XCUIElementTypeOther[@name="홈 탭"]`);
     }
     await safeClick(driver, `//XCUIElementTypeButton[@name="nudge"]`);
     // 웹뷰 전환
@@ -163,6 +165,31 @@ test(`Native iOS 068: 준회원 로그인 후 메시지 넛징 선택`, async ({
 });
 
 test(`Native iOS 069: 정회원 로그인 후 TWD/TDS 각 메인에서 넛징 선택`, async ({ driver }) => {
+    await safeClick(driver, `//XCUIElementTypeOther[@name="메뉴 탭"]`);
+    if (!(await isVisible(driver, logout))) {
+        await safeClick(driver, `//XCUIElementTypeStaticText[@name="로그인 해주세요"]`);
+        await driver.pause(2000);
+        const text = await driver.getAlertText().catch(() => "");
+        if (text) {
+            await driver.acceptAlert().catch(() => {});
+        }
+        await safeClick(driver, SSO_ID);
+        await safeClick(driver, `//XCUIElementTypeOther[@name="홈 탭"]`);
+    } else if (!(await isVisible(driver, SSO_ID))) {
+        await safeClick(driver, logout);
+        await safeClick(driver, `//XCUIElementTypeStaticText[@name="예(Y)"]`);
+        await safeClick(driver, `//XCUIElementTypeStaticText[@name="홈으로"]`);
+        await safeClick(driver, `//XCUIElementTypeStaticText[@name="Access Unavailable"]`);
+        await driver.pause(2000);
+        const text = await driver.getAlertText().catch(() => "");
+        if (text) {
+            await driver.acceptAlert().catch(() => {});
+        }
+        await safeClick(driver, SSO_ID);
+    } else {
+        await safeClick(driver, `//XCUIElementTypeOther[@name="홈 탭"]`);
+    }
+
     await safeClick(driver, `//XCUIElementTypeButton[@name="nudge"]`);
 
     // 웹뷰 전환
