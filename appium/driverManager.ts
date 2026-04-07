@@ -5,6 +5,8 @@ import type { Browser } from 'webdriverio';
 export function isUia2DeadError(e: unknown): boolean {
   const msg = (e as any)?.message ?? String(e);
   return (
+    msg.includes('socket hang up') ||
+    msg.includes('A session is either terminated or not started') ||
     msg.includes('instrumentation process is not running') ||
     msg.includes('cannot be proxied to UiAutomator2 server') ||
     (msg.includes('UiAutomator2 server') && msg.includes('not running'))

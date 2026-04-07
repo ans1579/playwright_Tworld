@@ -220,12 +220,32 @@ export async function swipeUpAos(
     driver: Browser,
     opts?: AosSwipeOpts
 ) {
-    const fromYPct = opts?.fromYPct ?? 0.85;
-    const toYPct = opts?.toYPct ?? 0.25;
-    const distance = Math.abs(fromYPct - toYPct) || 0.60;
+    const xPct = opts?.xPct ?? 0.5;
+    const fromYPct = opts?.fromYPct ?? 0.8;
+    const toYPct = opts?.toYPct ?? 0.3;
     const durationMs = opts?.durationMs ?? 520;
-    const settleMs = opts?.settleMs ?? 220;
-    await swipeByDirectionAos(driver, 'up', distance, durationMs);
+    const holdMs = opts?.holdMs ?? 100;
+    const settleMs = opts?.settleMs ?? 240;
+    const rect = await driver.getWindowRect();
+    const x = Math.round(rect.width * xPct);
+    const startY = Math.round(rect.height * fromYPct);
+    const endY = Math.round(rect.height * toYPct);
+
+    await driver.performActions([
+        {
+            type: 'pointer',
+            id: 'finger-aos-up',
+            parameters: { pointerType: 'touch' },
+            actions: [
+                { type: 'pointerMove', duration: 0, x, y: startY },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: holdMs },
+                { type: 'pointerMove', duration: durationMs, x, y: endY },
+                { type: 'pointerUp', button: 0 },
+            ],
+        },
+    ]);
+    await driver.releaseActions();
     await driver.pause(settleMs);
 }
 
@@ -240,43 +260,119 @@ export async function tapCellWithScrollAos(
     }
 ) {
     const maxSwipes = opts?.maxSwipes ?? 8;
-    const textEq = xpath.match(/@text\s*=\s*["']([^"']+)["']/)?.[1];
-    const textContains = xpath.match(/contains\(\s*@text\s*,\s*["']([^"']+)["']\s*\)/)?.[1];
-    const targetText = textEq ?? textContains;
-
-    // 1) text 기반 xpath면 UiScrollable(textContains)로 먼저 시도
-    if (targetText) {
-        const escaped = targetText.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        const uiScrollable = [
-            'new UiScrollable(new UiSelector().scrollable(true).instance(0))',
-            `.scrollIntoView(new UiSelector().textContains("${escaped}").instance(0));`,
-        ].join('');
-        try {
-            const el = await driver.$(`android=${uiScrollable}`);
-            if (await el.isDisplayed()) {
-                await el.click();
-                return;
-            }
-        } catch {}
-    }
+    const swipeOpts: AosSwipeOpts = {
+        xPct: opts?.swipe?.xPct ?? 0.5,
+        fromYPct: opts?.swipe?.fromYPct ?? 0.76,
+        toYPct: opts?.swipe?.toYPct ?? 0.42,
+        durationMs: opts?.swipe?.durationMs ?? 420,
+        holdMs: opts?.swipe?.holdMs ?? 100,
+        settleMs: opts?.swipe?.settleMs ?? 180,
+    };
+    let lastError: unknown = null;
 
     for (let i = 0; i <= maxSwipes; i++) {
+        const viewport = await driver.getWindowRect().catch(() => null);
         const candidates = await driver.$$(xpath);
         for (const el of candidates) {
-            if (await el.isDisplayed()) {
+            const displayed = await el.isDisplayed().catch(() => false);
+            if (!displayed) continue;
+
+            // 일부 단말/Appium 조합에서 off-screen 요소도 displayed=true로 나오는 경우가 있어
+            // viewport 안에 들어온 요소만 클릭 시도한다.
+            if (viewport) {
+                const loc = await el.getLocation().catch(() => null);
+                const size = await el.getSize().catch(() => null);
+                if (loc && size) {
+                    const top = loc.y;
+                    const bottom = loc.y + size.height;
+                    if (bottom <= 0 || top >= viewport.height) continue;
+                }
+            }
+
+            try {
                 if (opts?.tapPct) {
                     await tapElementByPct(driver, el, opts.tapPct);
                 } else {
                     await el.click();
                 }
                 return;
+            } catch (error) {
+                // 클릭 실패 시 바로 종료하지 않고 다음 후보/다음 스와이프로 진행
+                lastError = error;
             }
         }
 
         if (i < maxSwipes) {
-            await swipeUpAos(driver, opts?.swipe);
+            await swipeUpAos(driver, swipeOpts);
         }
     }
 
-    throw new Error(`못 찾음(AOS): ${xpath}`);
+    const reason = lastError ? ` :: lastError=${String((lastError as any)?.message ?? lastError)}` : '';
+    throw new Error(`못 찾음(AOS): ${xpath}${reason}`);
+}
+
+type WebviewScrollTapOpts = {
+    maxScrolls?: number;
+    stepPx?: number;
+    settleMs?: number;
+};
+
+// AOS WEBVIEW: 요소가 보일 때까지 DOM 스크롤 후 클릭
+export async function tapCellWithScrollWebviewAos(
+    driver: Browser,
+    xpath: string,
+    opts?: WebviewScrollTapOpts
+) {
+    const maxScrolls = opts?.maxScrolls ?? 10;
+    const stepPx = opts?.stepPx ?? 520;
+    const settleMs = opts?.settleMs ?? 220;
+    let lastError: unknown = null;
+
+    for (let i = 0; i <= maxScrolls; i += 1) {
+        const candidates = await driver.$$(xpath);
+        for (const el of candidates) {
+            const displayed = await el.isDisplayed().catch(() => false);
+            if (!displayed) continue;
+
+            try {
+                await el.click();
+                return;
+            } catch (error) {
+                lastError = error;
+            }
+        }
+
+        // webdriver click이 흔들리는 경우를 위해 DOM click fallback
+        try {
+            const clicked = await (driver as any).execute(
+                (xp: string) => {
+                    const node = document.evaluate(
+                        xp,
+                        document,
+                        null,
+                        XPathResult.FIRST_ORDERED_NODE_TYPE,
+                        null
+                    ).singleNodeValue as HTMLElement | null;
+                    if (!node) return false;
+                    node.scrollIntoView({ block: 'center', inline: 'nearest' });
+                    node.click();
+                    return true;
+                },
+                xpath
+            );
+            if (clicked) return;
+        } catch (error) {
+            lastError = error;
+        }
+
+        if (i < maxScrolls) {
+            await (driver as any).execute((dy: number) => {
+                window.scrollBy(0, dy);
+            }, stepPx);
+            await driver.pause(settleMs);
+        }
+    }
+
+    const reason = lastError ? ` :: lastError=${String((lastError as any)?.message ?? lastError)}` : '';
+    throw new Error(`못 찾음(AOS-WEBVIEW): ${xpath}${reason}`);
 }

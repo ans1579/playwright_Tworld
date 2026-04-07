@@ -1,65 +1,52 @@
-import { test, expect } from '@appium/fixtures.aos';
-import { isVisible, longPressByPercent, longPressBySelector, readText, safeClick, waitVisible } from '@tests/_shared/actions/ui';
-import { getAndSwitchToWebviewAos } from '@tests/_shared/actions/webview';
-import { tapCellWithScrollAos } from '@tests/_shared/actions/scroll';
-import { swipeByPercent } from '@tests/_shared/gestures/ios';
-import {
-  TWD,
-  defaultBeforeEach,
-} from './aos-native-stg.shared';
+import { test, expect } from "@appium/fixtures.aos";
+import { isVisible, longPressByPercentAos, longPressBySelectorAos, readText, safeClick, waitVisible } from "@tests/_shared/actions/ui";
+import { getAndSwitchToWebviewAos } from "@tests/_shared/actions/webview";
+import { tapCellWithScrollAos, tapCellWithScrollWebviewAos } from "@tests/_shared/actions/scroll";
+import { swipeByPercent } from "@tests/_shared/gestures/ios";
+import { TWD, defaultBeforeEach } from "./aos-native-stg.shared";
 
 test.use({ appPackage: TWD });
 
 test.beforeEach(async ({ driver }, testInfo) => {
-  const skip = [`AOS 021`, `AOS 023`, `AOS 024`];
-  if (skip.some((s) => testInfo.title.includes(s))) {
-    return;
-  }
-  await defaultBeforeEach(driver);
+    const skip = [`AOS 021`, `AOS 023`, `AOS 024`];
+    if (skip.some((s) => testInfo.title.includes(s))) {
+        return;
+    }
+    await defaultBeforeEach(driver);
 });
 test(`Native AOS 021: 위젯 추가`, async ({ driver }) => {
     await driver.pause(2000);
-    await driver.execute(`mobile: pressKey`, {keycode: 3});
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
     await driver.pause(2000);
-    await longPressByPercent(driver, {xPct: 0.1, yPct: 0.5});
+    await longPressByPercentAos(driver, { xPct: 0.1, yPct: 0.5 });
     await safeClick(driver, `//android.widget.Button[@text="위젯"]`);
     await driver.pause(2000);
-    await swipeByPercent(
-        driver,
-        {xPct: 0.5, yPct: 0.7},
-        {xPct: 0.5, yPct: 0.5}
-    );
+    await swipeByPercent(driver, { xPct: 0.5, yPct: 0.7 }, { xPct: 0.5, yPct: 0.5 });
     await safeClick(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/header_label" and @text="[STG] T world"]`);
     await driver.pause(1000);
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 1x1"]`)).toBe(true);
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 2x1"]`)).toBe(true);
     await driver.pause(1000);
-    await swipeByPercent(
-        driver,
-        {xPct: 0.5, yPct: 0.75},
-        {xPct: 0.5, yPct: 0.4}
-    );
+    await swipeByPercent(driver, { xPct: 0.5, yPct: 0.75 }, { xPct: 0.5, yPct: 0.4 });
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 3x1"]`)).toBe(true);
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 4x2"]`)).toBe(true);
     await safeClick(driver, `(//android.widget.FrameLayout[@resource-id="com.sec.android.app.launcher:id/expand_cell"])[3]/android.widget.LinearLayout`);
     await safeClick(driver, `//android.widget.LinearLayout[@resource-id="com.sec.android.app.launcher:id/list_expand"]/android.widget.LinearLayout[3]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/confirm"]`);
-})
-
+});
 
 test(`Native AOS 023: 위젯 - 메인 페이지 이동 확인`, async ({ driver }) => {
-    await driver.execute(`mobile: pressKey`, {keycode: 3});
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
     await safeClick(driver, `//android.widget.ImageView[@resource-id="Com.sktelecom.minit.ad.stg:id/tLogo"]`);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
     }
     await driver.pause(4000);
     expect(await isVisible(driver, `//android.widget.TextView[@text="T World"]`)).toBe(true);
-})
-
+});
 
 test(`Native AOS 024: 위젯 노출 항목 변경`, async ({ driver }) => {
-    await driver.execute(`mobile: pressKey`, {keycode: 3});
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
     await safeClick(driver, `//android.widget.ImageView[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetSetting"]`);
     await safeClick(driver, `//android.widget.LinearLayout[@resource-id="Com.sktelecom.minit.ad.stg:id/moveToWidgetSetting"]`);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
@@ -68,21 +55,28 @@ test(`Native AOS 024: 위젯 노출 항목 변경`, async ({ driver }) => {
     await driver.pause(4000);
     await safeClick(driver, `//android.widget.Button[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetDataSelected"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/displayName" and @text="미설정"]`);
-    await safeClick(driver,`//android.widget.Button[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetVoiceSelected"]`);
+    await safeClick(driver, `//android.widget.Button[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetVoiceSelected"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/displayName" and @text="미설정"]`);
     await safeClick(driver, `//android.widget.Button[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetSmsSelected"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/displayName" and @text="미설정"]`);
-    await driver.execute(`mobile: pressKey`, {keycode: 3});
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
     await driver.pause(3000);
     const msg1 = await readText(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/dataLimit"]`);
     const msg2 = await readText(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/callLimitSideText"]`);
     const msg3 = await readText(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/smsLimitSideText"]`);
-    expect([msg1, msg2, msg3].every(v => String(v ?? '').includes('미설정'))).toBe(true);
+    expect([msg1, msg2, msg3].every((v) => String(v ?? "").includes("미설정"))).toBe(true);
+});
 
+test(`Native AOS 025: 위젯 배너 선택`, async ({ driver }) => {
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
+    await safeClick(driver, `//android.widget.ImageView[@resource-id="Com.sktelecom.minit.ad.stg:id/banner"]`);
+    await driver.pause(3000);
+    expect(await isVisible(driver, `//android.widget.Image[@content-desc="AI 챗봇상담"]`)).toBe(true);
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
     // 위젯 삭제 - 테스트 반복을 위함
-    await longPressBySelector(driver, `//android.widget.RelativeLayout[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetLayout"]`);
+    await longPressBySelectorAos(driver, `//android.widget.RelativeLayout[@resource-id="Com.sktelecom.minit.ad.stg:id/widgetLayout"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/global_option_label" and @text="홈에서 삭제"]`);
-})
+});
 
 test(`Native AOS 037: 공유하기 1`, async ({ driver }) => {
     await driver.pause(3000);
@@ -94,7 +88,7 @@ test(`Native AOS 037: 공유하기 1`, async ({ driver }) => {
     const msg = await readText(driver, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title"]`);
     expect(msg).toContain(`T world`);
     await driver.back().catch(() => {});
-})
+});
 
 test(`Native AOS 038: 공유하기 2`, async ({ driver }) => {
     await driver.pause(3000);
@@ -109,7 +103,7 @@ test(`Native AOS 038: 공유하기 2`, async ({ driver }) => {
     const msg = await readText(driver, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_text_type_content"]`);
     expect(msg).toContain(`조르기`);
     await driver.back().catch(() => {});
-})
+});
 
 test(`Native AOS 041: App 설치 여부 확인`, async ({ driver }) => {
     await driver.pause(3000);
@@ -117,15 +111,14 @@ test(`Native AOS 041: App 설치 여부 확인`, async ({ driver }) => {
     await getAndSwitchToWebviewAos(driver);
     const c = await driver.getContext();
     console.log(`웹뷰 변경? = ${c}`);
-    await tapCellWithScrollAos(driver, `//span[contains(@class,'btn-more') and normalize-space(.)='더 보기']`);
+    await safeClick(driver, `//span[contains(@class,'btn-more') and normalize-space(.)='더 보기']`);
     await driver.pause(2000);
     const ctxs = await driver.getContexts();
     console.log(`ctxs = ${ctxs}`);
     await driver.switchContext(`NATIVE_APP`);
     expect(await isVisible(driver, `//android.view.View[@content-desc="설치된 앱 T 아이디"]`)).toBe(true);
     expect(await isVisible(driver, `//android.view.View[@content-desc="에이닷 설치된 앱 에이닷"]`)).toBe(true);
-})
-
+});
 
 test(`Native AOS 042: 웹뷰의 파일첨부 확인`, async ({ driver }) => {
     await driver.pause(3000);
@@ -144,15 +137,16 @@ test(`Native AOS 042: 웹뷰의 파일첨부 확인`, async ({ driver }) => {
     await driver.pause(1000);
     await safeClick(driver, `//android.widget.Button[@resource-id="fe-upload-ok"]`);
     const msg = await readText(driver, `//android.widget.Button[@text="삭제"]`);
-    expect(msg).toContain('삭제');
-})
-
+    expect(msg).toContain("삭제");
+});
 
 test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     const switchSpan = `//span[contains(@class,'fe-set-eng') and contains(@class,'btn-switch')]`;
     const getSwitchState = async (label: string) => {
         const el = await waitVisible(driver, switchSpan);
-        const className = String(await el.getAttribute(`class`) ?? '').trim().toLowerCase();
+        const className = String((await el.getAttribute(`class`)) ?? "")
+            .trim()
+            .toLowerCase();
         const isOn = className.includes(`active`) || className.includes(`on`) || className.includes(`checked`);
         console.log(`[Test:045] ${label} 스위치 상태: ${isOn ? `ON` : `OFF`} | class=${className}`);
         return isOn;
@@ -193,8 +187,7 @@ test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
         await safeClick(driver, switchSpan);
     }
     await driver.switchContext(`NATIVE_APP`);
-})
-
+});
 
 test(`Native AOS 047: 앱 종료 - 뒤로가기`, async ({ driver }) => {
     await driver.pause(4000);
@@ -202,5 +195,4 @@ test(`Native AOS 047: 앱 종료 - 뒤로가기`, async ({ driver }) => {
     await driver.back().catch(() => {});
     await safeClick(driver, `//android.widget.Button[@text="종료"]`);
     expect(await isVisible(driver, `//android.widget.TextView[@text="T World"]`)).toBe(false);
-})
-
+});

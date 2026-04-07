@@ -63,8 +63,8 @@ export const test = base.extend<Fixtures>({
             path: APPIUM_PATH,
             capabilities: makeAosCaps({ appPackage, appActivity }),
             logLevel: 'error',
-            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 15000),
-            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 0),
+            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 60000),
+            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 1),
         }));
 
         try {
@@ -75,7 +75,7 @@ export const test = base.extend<Fixtures>({
     },
     // 기존 드라이버는 유지하면서 manager에서 꺼내서 사용
     driver: async({ driverManager }, use) => {
-        const driver = await driverManager.get();
+        const driver = await driverManager.ensureAlive();
         await use(driver);
     },
 });

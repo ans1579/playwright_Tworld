@@ -31,7 +31,7 @@ export function makeAosCaps(overrides: AosCapsOverrides = {}) {
     'appium:autoWebview': false,
     'appium:ensureWebviewsHavePages': true,
     'appium:chromedriverAutodownload': true,
-    'appium:recreateChromeDriverSessions': true,
+    'appium:recreateChromeDriverSessions': false,
     'appium:webviewDevtoolsPort': 10900,
     'appium:chromedriverPorts': [8000, [9000, 9050]],
     'appium:autoGrantPermissions': true,

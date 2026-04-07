@@ -11,10 +11,24 @@ function asMobileContextBrowser(driver: Browser): MobileContextBrowser {
   return driver as MobileContextBrowser;
 }
 
+async function withTimeout<T>(work: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timer: NodeJS.Timeout | null = null;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout(${timeoutMs}ms)`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // 현재 컨텍스트 목록에서 WEBVIEW_* id 하나를 반환한다.
 export async function getWebviewContextId(driver: Browser, packageHint?: string): Promise<string | null> {
   const d = asMobileContextBrowser(driver);
-  const contexts = await d.getContexts();
+  const contexts = await withTimeout(d.getContexts(), 8000, 'getContexts');
   const webviews = contexts.filter((id) => id.startsWith('WEBVIEW'));
   if (webviews.length === 0) return null;
 
@@ -36,6 +50,7 @@ export async function getAndSwitchToWebviewAos(
 ): Promise<string> {
   const d = asMobileContextBrowser(driver);
   const maxTry = 3;
+  const perCallTimeoutMs = 10000;
   let lastErr: unknown = null;
   let lastContexts: string[] = [];
 
@@ -55,16 +70,16 @@ export async function getAndSwitchToWebviewAos(
 
       const webviewId = await getWebviewContextId(d, currentPackage);
       if (!webviewId) {
-        const contexts = await d.getContexts();
+        const contexts = await withTimeout(d.getContexts(), perCallTimeoutMs, 'getContexts');
         lastContexts = contexts;
         throw new Error(`WEBVIEW 없음: ${JSON.stringify(contexts)}`);
       }
 
-      await d.switchContext(webviewId);
+      await withTimeout(d.switchContext(webviewId), perCallTimeoutMs, 'switchContext');
 
       let cur = '';
       if (typeof d.getContext === 'function') {
-        cur = await d.getContext().catch(() => '');
+        cur = await withTimeout(d.getContext().catch(() => ''), perCallTimeoutMs, 'getContext');
       }
       if (cur && cur.startsWith('WEBVIEW')) {
         return webviewId;
@@ -72,7 +87,7 @@ export async function getAndSwitchToWebviewAos(
 
       throw new Error(`컨텍스트 전환 확인 실패: current=${String(cur)}`);
     } catch (err) {
-      lastContexts = await d.getContexts().catch(() => []);
+      lastContexts = await withTimeout(d.getContexts().catch(() => []), perCallTimeoutMs, 'getContexts').catch(() => []);
       lastErr = err;
     }
   }

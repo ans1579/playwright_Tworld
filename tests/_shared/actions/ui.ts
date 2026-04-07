@@ -1,29 +1,49 @@
 // tests/qaTest/shared/actions/ui.ts
 import type { Browser } from "webdriverio";
 
+async function withHardTimeout<T>(work: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+    let timer: NodeJS.Timeout | null = null;
+    try {
+        return await Promise.race([
+            work,
+            new Promise<T>((_, reject) => {
+                timer = setTimeout(() => reject(new Error(`${label} timeout(${timeoutMs}ms)`)), timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+}
+
 export async function waitVisible(
     driver: Browser,
     selector: string,
     timeoutMs = 5000
 ) {
-    const retryCount = 2;
-    const retryMs = 150;
-    let lastError: unknown;
+    const run = async () => {
+        const retryCount = 2;
+        const retryMs = 150;
+        let lastError: unknown;
 
-    for (let i = 0; i <= retryCount; i++) {
-        try {
-            const el = await driver.$(selector);
-            await el.waitForDisplayed({ timeout: timeoutMs });
-            return el;
-        } catch (error) {
-            lastError = error;
-            if (i < retryCount) {
-                await driver.pause(retryMs);
+        for (let i = 0; i <= retryCount; i++) {
+            try {
+                const el = await driver.$(selector);
+                await el.waitForDisplayed({ timeout: timeoutMs });
+                return el;
+            } catch (error) {
+                lastError = error;
+                if (isSessionTerminatedError(error)) break;
+                if (i < retryCount) {
+                    await driver.pause(retryMs);
+                }
             }
         }
-    }
 
-    throw lastError ?? new Error(`waitVisible 실패 :: selector = ${selector}`);
+        throw lastError ?? new Error(`waitVisible 실패 :: selector = ${selector}`);
+    };
+
+    if (!isAndroidDriver(driver)) return run();
+    return withHardTimeout(run(), timeoutMs + 12000, 'waitVisible');
 }
 
 export async function readText(
@@ -40,21 +60,26 @@ export async function isVisible(
     selector: string,
     timeoutMs = 2000
 ): Promise<boolean> {
-    const retryCount = 1;
-    const retryMs = 100;
+    const run = async () => {
+        const retryCount = 1;
+        const retryMs = 100;
 
-    for (let i = 0; i <= retryCount; i++) {
-        try {
-            const el = await driver.$(selector);
-            await el.waitForDisplayed({ timeout: timeoutMs });
-            return true;
-        } catch {
-            if (i < retryCount) {
-                await driver.pause(retryMs);
+        for (let i = 0; i <= retryCount; i++) {
+            try {
+                const el = await driver.$(selector);
+                await el.waitForDisplayed({ timeout: timeoutMs });
+                return true;
+            } catch {
+                if (i < retryCount) {
+                    await driver.pause(retryMs);
+                }
             }
         }
-    }
-    return false;
+        return false;
+    };
+
+    if (!isAndroidDriver(driver)) return run();
+    return withHardTimeout(run(), timeoutMs + 8000, 'isVisible');
 }
 
 export async function waitNotVisible(
@@ -80,6 +105,16 @@ type SafeClickOptions = {
 function getErrorMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
     return String(err);
+}
+
+function isSessionTerminatedError(err: unknown): boolean {
+    const msg = getErrorMessage(err);
+    return (
+        msg.includes('A session is either terminated or not started') ||
+        msg.includes('socket hang up') ||
+        msg.includes('instrumentation process is not running') ||
+        msg.includes('cannot be proxied to UiAutomator2 server')
+    );
 }
 
 function isAndroidDriver(driver: Browser): boolean {
@@ -142,28 +177,29 @@ export async function safeClick(
     selector: string,
     opts?: SafeClickOptions
 ) {
-    const timeoutMs = opts?.timeoutMs ?? 7000;
-    const intervalMs = opts?.intervalMs ?? 80;
-    const retryCount = opts?.retryCount ?? 2;
-    const retryMs = opts?.retryMs ?? 120;
-    const fastPathTimeoutMs = opts?.fastPathTimeoutMs ?? 900;
-    const useCenterTapFallback = opts?.useCenterTapFallback ?? true;
-    const startedAt = Date.now();
-    const deadline = startedAt + timeoutMs;
-    let lastError: unknown;
+    const run = async () => {
+        const timeoutMs = opts?.timeoutMs ?? 7000;
+        const intervalMs = opts?.intervalMs ?? 80;
+        const retryCount = opts?.retryCount ?? 2;
+        const retryMs = opts?.retryMs ?? 120;
+        const fastPathTimeoutMs = opts?.fastPathTimeoutMs ?? 900;
+        const useCenterTapFallback = opts?.useCenterTapFallback ?? true;
+        const startedAt = Date.now();
+        const deadline = startedAt + timeoutMs;
+        let lastError: unknown;
 
-    for (let i = 0; i <= retryCount; i++) {
-        const remaining = deadline - Date.now();
-        if (remaining <= 0) break;
+        for (let i = 0; i <= retryCount; i++) {
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) break;
 
-        // 1차는 빠른 감지, 이후는 남은 예산 전체 사용
-        const perAttemptTimeoutMs =
-            i === 0
-                ? Math.min(fastPathTimeoutMs, remaining)
-                : remaining;
+            // 1차는 빠른 감지, 이후는 남은 예산 전체 사용
+            const perAttemptTimeoutMs =
+                i === 0
+                    ? Math.min(fastPathTimeoutMs, remaining)
+                    : remaining;
 
-        try {
-            const el = await driver.$(selector);
+            try {
+                const el = await driver.$(selector);
 
             let displayedError: unknown;
             try {
@@ -214,21 +250,26 @@ export async function safeClick(
                 lastError = clickErr;
                 throw clickErr;
             }
-        } catch (error) {
-            lastError = error;
-            if (i < retryCount) {
-                const pauseMs = Math.min(retryMs + i * 40, Math.max(0, deadline - Date.now()));
-                if (pauseMs > 0) {
-                    await driver.pause(pauseMs);
+            } catch (error) {
+                lastError = error;
+                if (isSessionTerminatedError(error)) break;
+                if (i < retryCount) {
+                    const pauseMs = Math.min(retryMs + i * 40, Math.max(0, deadline - Date.now()));
+                    if (pauseMs > 0) {
+                        await driver.pause(pauseMs);
+                    }
                 }
             }
         }
-    }
 
-    const elapsedMs = Date.now() - startedAt;
-    throw new Error(
-        `safeClick 실패 :: selector = ${selector} :: elapsed=${elapsedMs}ms :: reason=${getErrorMessage(lastError)}`
-    );
+        const elapsedMs = Date.now() - startedAt;
+        throw new Error(
+            `safeClick 실패 :: selector = ${selector} :: elapsed=${elapsedMs}ms :: reason=${getErrorMessage(lastError)}`
+        );
+    };
+
+    if (!isAndroidDriver(driver)) return run();
+    return withHardTimeout(run(), (opts?.timeoutMs ?? 7000) + 18000, `safeClick(${selector})`);
 }
 
 export async function clickPass(driver: Browser, selector: string, timeout = 3000) {
@@ -298,8 +339,8 @@ type LongPressOptions = {
     settleMs?: number;
 };
 
-// 퍼센트 좌표 기준 롱프레스 (AOS 위젯 진입 등에 사용)
-export async function longPressByPercent(
+// AOS 전용 호출명: 퍼센트 좌표 기준 롱프레스 (위젯 진입 등에 사용)
+export async function longPressByPercentAos(
     driver: Browser,
     opts?: LongPressOptions
 ) {
@@ -329,14 +370,22 @@ export async function longPressByPercent(
     await driver.pause(settleMs);
 }
 
+// iOS 전용 호출명 (동작은 W3C touch action 공용 구현 사용)
+export async function longPressByPercentIos(
+    driver: Browser,
+    opts?: LongPressOptions
+) {
+    return longPressByPercentAos(driver, opts);
+}
+
 type LongPressSelectorOptions = {
     timeoutMs?: number;
     holdMs?: number;
     settleMs?: number;
 };
 
-// selector 요소의 중심 좌표를 롱프레스
-export async function longPressBySelector(
+// AOS 전용 호출명: selector 요소의 중심 좌표를 롱프레스
+export async function longPressBySelectorAos(
     driver: Browser,
     selector: string,
     opts?: LongPressSelectorOptions
@@ -366,4 +415,30 @@ export async function longPressBySelector(
     ]);
     await driver.releaseActions();
     await driver.pause(settleMs);
+}
+
+// iOS 전용 호출명 (동작은 W3C touch action 공용 구현 사용)
+export async function longPressBySelectorIos(
+    driver: Browser,
+    selector: string,
+    opts?: LongPressSelectorOptions
+) {
+    return longPressBySelectorAos(driver, selector, opts);
+}
+
+// 하위 호환 alias (점진적 전환용)
+export async function longPressByPercent(
+    driver: Browser,
+    opts?: LongPressOptions
+) {
+    return longPressByPercentAos(driver, opts);
+}
+
+// 하위 호환 alias (점진적 전환용)
+export async function longPressBySelector(
+    driver: Browser,
+    selector: string,
+    opts?: LongPressSelectorOptions
+) {
+    return longPressBySelectorAos(driver, selector, opts);
 }
