@@ -10,6 +10,10 @@ import { DriverManager } from './driverManager';
 type Fixtures = {
     driverManager: DriverManager;
     driver: Browser;
+    runWithRecovery: <T>(
+        action: (driver: Browser) => Promise<T>,
+        onRecovered?: (driver: Browser) => Promise<void> | void
+    ) => Promise<T>;
     appPackage: string;
     appActivity: string;
 };
@@ -40,13 +44,14 @@ function cleanupAppiumPkgs(adbPath: string, udid: string) {
     const pkgs = [
         'io.appium.uiautomator2.server',
         'io.appium.uiautomator2.server.test',
-        'io.appium.settings',
     ];
     for (const p of pkgs) {
         try { adb(adbPath, udid, ['uninstall', p]); } catch {}
         try { adb(adbPath, udid, ['shell', 'pm', 'uninstall', '--user', '0', p]); } catch {}
     }
 }
+
+let didInitialCleanup = false;
 
 export const test = base.extend<Fixtures>({
     appPackage: [APP_PACKAGE, { option: true }],
@@ -55,7 +60,10 @@ export const test = base.extend<Fixtures>({
     // 드라이버 매니저 생성
     driverManager: async ({ appPackage, appActivity }, use) => {
         const adbPath = resolveAdbPath();
-        if (APPIUM_CLEANUP) cleanupAppiumPkgs(adbPath, ANDROID_UDID);
+        if (APPIUM_CLEANUP && !didInitialCleanup) {
+            cleanupAppiumPkgs(adbPath, ANDROID_UDID);
+            didInitialCleanup = true;
+        }
 
         const mgr = new DriverManager(() => ({
             hostname: APPIUM_HOST,
@@ -63,8 +71,8 @@ export const test = base.extend<Fixtures>({
             path: APPIUM_PATH,
             capabilities: makeAosCaps({ appPackage, appActivity }),
             logLevel: 'error',
-            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 60000),
-            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 1),
+            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 180000),
+            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 2),
         }));
 
         try {
@@ -73,10 +81,14 @@ export const test = base.extend<Fixtures>({
             await mgr.dispose();
         }
     },
-    // 기존 드라이버는 유지하면서 manager에서 꺼내서 사용
+    // 기본은 원래 WDIO 체이너블 driver 유지
     driver: async({ driverManager }, use) => {
         const driver = await driverManager.ensureAlive();
         await use(driver);
+    },
+    // 필요 구간에서만 복구 래퍼 사용
+    runWithRecovery: async({ driverManager }, use) => {
+        await use((action, onRecovered) => driverManager.runWithRecovery(action, onRecovered));
     },
 });
 

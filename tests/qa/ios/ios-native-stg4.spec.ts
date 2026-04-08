@@ -358,4 +358,8 @@ test(`Native iOS 077: Type1 화면 진입 및 스크롤링, 닫힘 위치 확인
     const locY = await getVertical(driver, `//XCUIElementTypeButton[@name="이전 페이지"]`);
     console.log(`x : ${locX} | y : ${locY}`);
     expect({ x: locX, y: locY }).toEqual({ x: "left", y: "top" });
+    if (await isVisible(driver, `//XCUIElementTypeStaticText[@name="기기 설정"]`)) {
+        await safeClick(driver, `//XCUIElementTypeButton[@name="알림 받기"]`);
+    }
+    await driver.pause(1000);
 });

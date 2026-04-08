@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "packageManager": "npm@11.11.0",
   "scripts": {
     "apiTest": "playwright test -c api.config.ts --pass-with-no-tests tests/api/apiTest.spec.ts",
     "test:qa": "playwright test -c qa.config.ts",
@@ -17,17 +18,22 @@
     "report:qa": "playwright show-report test-output/reports/qa/latest",
     "report:e2e": "playwright show-report test-output/reports/latest",
     "report:api": "playwright show-report test-output/reports/api/latest",
-    "report:latest": "npm run report:e2e"
+    "report:latest": "npm run report:e2e",
+    "env:versions": "node -v && npm -v && npx appium -v && npm ls webdriverio --depth=0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": "24.13.1",
+    "npm": "11.11.0"
+  },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^25.2.3",
-    "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "webdriverio": "^9.24.0"
+    "@playwright/test": "1.58.2",
+    "@types/node": "25.2.3",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3",
+    "webdriverio": "9.24.0"
   }
 }

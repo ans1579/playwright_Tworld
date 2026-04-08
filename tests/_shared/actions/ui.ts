@@ -32,7 +32,9 @@ export async function waitVisible(
                 return el;
             } catch (error) {
                 lastError = error;
-                if (isSessionTerminatedError(error)) break;
+                if (isSessionTerminatedError(error)) {
+                    throw error;
+                }
                 if (i < retryCount) {
                     await driver.pause(retryMs);
                 }
@@ -69,7 +71,10 @@ export async function isVisible(
                 const el = await driver.$(selector);
                 await el.waitForDisplayed({ timeout: timeoutMs });
                 return true;
-            } catch {
+            } catch (error) {
+                if (isSessionTerminatedError(error)) {
+                    throw error;
+                }
                 if (i < retryCount) {
                     await driver.pause(retryMs);
                 }
@@ -79,7 +84,7 @@ export async function isVisible(
     };
 
     if (!isAndroidDriver(driver)) return run();
-    return withHardTimeout(run(), timeoutMs + 8000, 'isVisible');
+    return withHardTimeout(run(), timeoutMs + 13000, 'isVisible');
 }
 
 export async function waitNotVisible(
@@ -113,6 +118,8 @@ function isSessionTerminatedError(err: unknown): boolean {
         msg.includes('A session is either terminated or not started') ||
         msg.includes('socket hang up') ||
         msg.includes('instrumentation process is not running') ||
+        msg.includes('instrumentation process cannot be initialized') ||
+        msg.includes('The operation was aborted due to timeout') ||
         msg.includes('cannot be proxied to UiAutomator2 server')
     );
 }
@@ -252,7 +259,9 @@ export async function safeClick(
             }
             } catch (error) {
                 lastError = error;
-                if (isSessionTerminatedError(error)) break;
+                if (isSessionTerminatedError(error)) {
+                    throw error;
+                }
                 if (i < retryCount) {
                     const pauseMs = Math.min(retryMs + i * 40, Math.max(0, deadline - Date.now()));
                     if (pauseMs > 0) {

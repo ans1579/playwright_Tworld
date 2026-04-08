@@ -14,10 +14,7 @@ test.beforeEach(async ({ driver }, testInfo) => {
 });
 test(`Native AOS 005: 로그인 안한 상태에서 로그인하기`, async ({ driver }) => {
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
-    const isLogIn = await driver
-        .$(logout)
-        .isDisplayed()
-        .catch(() => false);
+    const isLogIn = await isVisible(driver, logout).catch(() => false);
 
     if (isLogIn) {
         await safeClick(driver, logout);
@@ -25,8 +22,14 @@ test(`Native AOS 005: 로그인 안한 상태에서 로그인하기`, async ({ d
         await safeClick(driver, `//android.widget.TextView[@text="홈으로"]`);
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
         await safeClick(driver, `//android.view.View[@content-desc="로그인 해주세요 "]`);
+        if (await isVisible(driver, `//android.app.AlertDialog[@resource-id="modalAlert1"]/android.view.View/android.view.View`)) {
+            await safeClick(driver, `//android.widget.Button[@text="확인"]`);
+        }
     } else {
         await safeClick(driver, `//android.view.View[@content-desc="로그인 해주세요 "]`);
+        if (await isVisible(driver, `//android.app.AlertDialog[@resource-id="modalAlert1"]/android.view.View/android.view.View`)) {
+            await safeClick(driver, `//android.widget.Button[@text="확인"]`);
+        }
     }
     await driver.pause(2000);
     if (await isVisible(driver, `//android.widget.Button[@text="본인 확인된 T ID pleasep@naver.com 010-8832-0456 로 로그인"]`)) {
@@ -70,6 +73,9 @@ test(`Native AOS 009: 회원가입`, async ({ driver }) => {
 
 test(`Native AOS 010: T ID 정보 확인`, async ({ driver }) => {
     await clickPass(driver, `//android.widget.TextView[@content-desc="로그인하기 버튼"]`);
+    if (await isVisible(driver, `//android.app.AlertDialog[@resource-id="modalAlert1"]/android.view.View/android.view.View`)) {
+        await safeClick(driver, `//android.widget.Button[@text="확인"]`);
+    }
     await clickPass(driver, `//android.widget.Button[@text="본인 확인된 T ID pleasep@naver.com 010-8832-0456 로 로그인"]`);
     await driver.pause(3000);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
@@ -228,10 +234,7 @@ test(`Native AOS 020: GPS OFF 상태로 로그인 후 메인 하단 매장찾기
     }
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
     await driver.pause(1000);
-    const isLogIn = await driver
-        .$(logout)
-        .isDisplayed()
-        .catch(() => false);
+    const isLogIn = await isVisible(driver, logout).catch(() => false);
     if (!isLogIn) {
         await safeClick(driver, `//android.view.View[@content-desc="로그인 해주세요 "]`);
         await safeClick(driver, `//android.widget.Button[@text="본인 확인된 T ID pleasep@naver.com 010-8832-0456 로 로그인"]`);

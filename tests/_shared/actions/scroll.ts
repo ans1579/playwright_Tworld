@@ -125,6 +125,15 @@ type AosSwipeOpts = {
     settleMs?: number;
 };
 
+type AosHorizontalSwipeOpts = {
+    yPct?: number;
+    fromXPct?: number;
+    toXPct?: number;
+    durationMs?: number;
+    holdMs?: number;
+    settleMs?: number;
+};
+
 type ElementTapPctOpts = {
     xPct?: number;
     yPct?: number;
@@ -241,6 +250,74 @@ export async function swipeUpAos(
                 { type: 'pointerDown', button: 0 },
                 { type: 'pause', duration: holdMs },
                 { type: 'pointerMove', duration: durationMs, x, y: endY },
+                { type: 'pointerUp', button: 0 },
+            ],
+        },
+    ]);
+    await driver.releaseActions();
+    await driver.pause(settleMs);
+}
+
+// AOS 가로 슬라이드(다음 슬라이드: 1 -> 2, 오른쪽에서 왼쪽으로 이동)
+export async function swipeLeftAos(
+    driver: Browser,
+    opts?: AosHorizontalSwipeOpts
+) {
+    const yPct = opts?.yPct ?? 0.5;
+    const fromXPct = opts?.fromXPct ?? 0.85;
+    const toXPct = opts?.toXPct ?? 0.15;
+    const durationMs = opts?.durationMs ?? 360;
+    const holdMs = opts?.holdMs ?? 80;
+    const settleMs = opts?.settleMs ?? 240;
+    const rect = await driver.getWindowRect();
+    const y = Math.round(rect.height * yPct);
+    const startX = Math.round(rect.width * fromXPct);
+    const endX = Math.round(rect.width * toXPct);
+
+    await driver.performActions([
+        {
+            type: 'pointer',
+            id: 'finger-aos-left',
+            parameters: { pointerType: 'touch' },
+            actions: [
+                { type: 'pointerMove', duration: 0, x: startX, y },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: holdMs },
+                { type: 'pointerMove', duration: durationMs, x: endX, y },
+                { type: 'pointerUp', button: 0 },
+            ],
+        },
+    ]);
+    await driver.releaseActions();
+    await driver.pause(settleMs);
+}
+
+// AOS 가로 슬라이드(이전 슬라이드: 2 -> 1, 왼쪽에서 오른쪽으로 이동)
+export async function swipeRightAos(
+    driver: Browser,
+    opts?: AosHorizontalSwipeOpts
+) {
+    const yPct = opts?.yPct ?? 0.5;
+    const fromXPct = opts?.fromXPct ?? 0.15;
+    const toXPct = opts?.toXPct ?? 0.85;
+    const durationMs = opts?.durationMs ?? 360;
+    const holdMs = opts?.holdMs ?? 80;
+    const settleMs = opts?.settleMs ?? 240;
+    const rect = await driver.getWindowRect();
+    const y = Math.round(rect.height * yPct);
+    const startX = Math.round(rect.width * fromXPct);
+    const endX = Math.round(rect.width * toXPct);
+
+    await driver.performActions([
+        {
+            type: 'pointer',
+            id: 'finger-aos-right',
+            parameters: { pointerType: 'touch' },
+            actions: [
+                { type: 'pointerMove', duration: 0, x: startX, y },
+                { type: 'pointerDown', button: 0 },
+                { type: 'pause', duration: holdMs },
+                { type: 'pointerMove', duration: durationMs, x: endX, y },
                 { type: 'pointerUp', button: 0 },
             ],
         },

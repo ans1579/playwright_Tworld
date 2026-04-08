@@ -8,6 +8,7 @@ export function isUia2DeadError(e: unknown): boolean {
     msg.includes('socket hang up') ||
     msg.includes('A session is either terminated or not started') ||
     msg.includes('instrumentation process is not running') ||
+    msg.includes('instrumentation process cannot be initialized') ||
     msg.includes('cannot be proxied to UiAutomator2 server') ||
     (msg.includes('UiAutomator2 server') && msg.includes('not running'))
   );
@@ -27,6 +28,23 @@ export class DriverManager {
     try { await this.driver?.deleteSession(); } catch {}
     this.driver = await remote(this.makeRemoteOpts());
     return this.driver;
+  }
+
+  async runWithRecovery<T>(
+    action: (driver: Browser) => Promise<T>,
+    onRecovered?: (driver: Browser) => Promise<void> | void
+  ): Promise<T> {
+    const current = await this.get();
+    try {
+      return await action(current);
+    } catch (e) {
+      if (!isUia2DeadError(e)) throw e;
+      const recreated = await this.recreate();
+      if (onRecovered) {
+        await onRecovered(recreated);
+      }
+      return await action(recreated);
+    }
   }
 
   async ensureAlive(): Promise<Browser> {

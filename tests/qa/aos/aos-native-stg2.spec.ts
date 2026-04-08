@@ -142,6 +142,8 @@ test(`Native AOS 042: 웹뷰의 파일첨부 확인`, async ({ driver }) => {
 
 test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     const switchSpan = `//span[contains(@class,'fe-set-eng') and contains(@class,'btn-switch')]`;
+    const menuKo = `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`;
+    const menuEn = `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="MENU"]`;
     const getSwitchState = async (label: string) => {
         const el = await waitVisible(driver, switchSpan);
         const className = String((await el.getAttribute(`class`)) ?? "")
@@ -153,9 +155,11 @@ test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     };
 
     await driver.pause(3000);
-    await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
+    const initialMenuTarget = (await isVisible(driver, menuKo, 2500).catch(() => false)) ? menuKo : menuEn;
+    await safeClick(driver, initialMenuTarget);
     await safeClick(driver, `//android.view.View[@content-desc="English!"]`);
-    await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="MENU"]`);
+    const firstMenuTarget = (await isVisible(driver, menuEn, 3000).catch(() => false)) ? menuEn : menuKo;
+    await safeClick(driver, firstMenuTarget);
     await driver.pause(1000);
     await safeClick(driver, `//android.view.View[@content-desc="setting"]/android.view.View/android.widget.TextView`);
     await getAndSwitchToWebviewAos(driver);
@@ -176,7 +180,8 @@ test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     expect(msg).toContain(`My Bills`);
     await driver.pause(1000);
     await driver.switchContext(`NATIVE_APP`).catch(() => {});
-    await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="MENU"]`);
+    const secondMenuTarget = (await isVisible(driver, menuEn, 3000).catch(() => false)) ? menuEn : menuKo;
+    await safeClick(driver, secondMenuTarget);
     await driver.pause(1000);
     await safeClick(driver, `//android.view.View[@content-desc="setting"]/android.view.View/android.widget.TextView`);
     await driver.pause(1000);
