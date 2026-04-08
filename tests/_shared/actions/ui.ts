@@ -7,7 +7,7 @@ async function withHardTimeout<T>(work: Promise<T>, timeoutMs: number, label: st
         return await Promise.race([
             work,
             new Promise<T>((_, reject) => {
-                timer = setTimeout(() => reject(new Error(`${label} timeout(${timeoutMs}ms)`)), timeoutMs);
+                timer = setTimeout(() => reject(new Error(`${label} 타임아웃(${timeoutMs}ms)`)), timeoutMs);
             }),
         ]);
     } finally {
@@ -112,6 +112,28 @@ function getErrorMessage(err: unknown): string {
     return String(err);
 }
 
+function toKoreanReason(err: unknown): string {
+    const msg = getErrorMessage(err);
+
+    const notDisplayed = msg.match(/still not displayed after (\d+)ms/i);
+    if (notDisplayed) {
+        return `요소가 ${notDisplayed[1]}ms 안에 표시되지 않았습니다.`;
+    }
+    if (msg.includes('A session is either terminated or not started')) {
+        return '세션이 종료되었거나 시작되지 않았습니다.';
+    }
+    if (msg.includes('instrumentation process is not running')) {
+        return 'UiAutomator2 instrumentation 프로세스가 중단되었습니다.';
+    }
+    if (msg.includes('instrumentation process cannot be initialized')) {
+        return 'UiAutomator2 instrumentation 초기화에 실패했습니다.';
+    }
+    if (msg.includes('socket hang up')) {
+        return 'Appium 연결이 중간에 끊어졌습니다(socket hang up).';
+    }
+    return msg;
+}
+
 function isSessionTerminatedError(err: unknown): boolean {
     const msg = getErrorMessage(err);
     return (
@@ -185,7 +207,7 @@ export async function safeClick(
     opts?: SafeClickOptions
 ) {
     const run = async () => {
-        const timeoutMs = opts?.timeoutMs ?? 7000;
+        const timeoutMs = opts?.timeoutMs ?? 10000;
         const intervalMs = opts?.intervalMs ?? 80;
         const retryCount = opts?.retryCount ?? 2;
         const retryMs = opts?.retryMs ?? 120;
@@ -273,12 +295,12 @@ export async function safeClick(
 
         const elapsedMs = Date.now() - startedAt;
         throw new Error(
-            `safeClick 실패 :: selector = ${selector} :: elapsed=${elapsedMs}ms :: reason=${getErrorMessage(lastError)}`
+            `safeClick 실패 :: selector = ${selector} :: 경과=${elapsedMs}ms :: 원인=${toKoreanReason(lastError)}`
         );
     };
 
     if (!isAndroidDriver(driver)) return run();
-    return withHardTimeout(run(), (opts?.timeoutMs ?? 7000) + 18000, `safeClick(${selector})`);
+    return withHardTimeout(run(), (opts?.timeoutMs ?? 10000) + 18000, `safeClick(${selector})`);
 }
 
 export async function clickPass(driver: Browser, selector: string, timeout = 3000) {
