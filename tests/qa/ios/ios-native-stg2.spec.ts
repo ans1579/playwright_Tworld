@@ -26,6 +26,7 @@ test(`Native iOS 037: 공유하기 2`, async ({ driver }) => {
     await safeClick(driver, `//XCUIElementTypeButton[@name="MY" and @value="1"]`);
     await safeClick(driver, `//XCUIElementTypeStaticText[@name="나의 데이터/통화"]`);
     await tapCellWithScroll(driver, `//XCUIElementTypeLink[@name="데이터 조르기"]`);
+    await driver.pause(1000);
     await safeClick(driver, `//XCUIElementTypeButton[@name="조르기 요청"]`);
     expect(await waitVisible(driver, `//XCUIElementTypeNavigationBar[@name="UIActivityContentView"]/XCUIElementTypeOther`)).toBeTruthy();
 });

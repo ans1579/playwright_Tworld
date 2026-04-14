@@ -71,8 +71,20 @@ export async function restartTwdApp(driver: Browser, waitMs = 2000) {
     }
 }
 
-export async function defaultBeforeEach(driver: Browser) {
-    await restartTwdApp(driver, 2000);
+type BasicTestInfo = {
+    title: string;
+};
+
+export async function defaultBeforeEach(
+    driver: Browser,
+    testInfo?: BasicTestInfo,
+    skipTitles: string[] = []
+) {
+    const skipRestart = !!testInfo && skipTitles.some((s) => testInfo.title.includes(s));
+
+    if (!skipRestart) {
+        await restartTwdApp(driver, 2000);
+    }
     await closeIntroIfPresent(driver);
     await driver.pause(3000);
 }

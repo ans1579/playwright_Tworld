@@ -6,8 +6,8 @@ import { TWD, MENU_BTN, SSO_ID, adbShell, aiBtn, defaultBeforeEach, logout, nudg
 
 test.use({ appPackage: TWD });
 
-test.beforeEach(async ({ driver }) => {
-    await defaultBeforeEach(driver);
+test.beforeEach(async ({ driver }, testInfo) => {
+    await defaultBeforeEach(driver, testInfo, [`Native AOS 080`, `Native AOS 082`]);
 });
 test(`Native AOS 066: 비로그인 상태에서 메시지 넛징 선택`, async ({ driver }) => {
     await driver.pause(3000);
@@ -340,7 +340,10 @@ test(`Native AOS 079: AI Layer 진입 후 Type1 화면 진입 및 스크롤링, 
 
 test(`Native AOS 080: AOS 위치 옵션 끄고 AI Layer 최초 진입`, async ({ driver }) => {
     resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD);
+    await driver.terminateApp(TWD);
+    await driver.activateApp(TWD);
     await driver.pause(2000);
+    await waitVisible(driver, aiBtn);
     await safeClick(driver, aiBtn);
     if (await isVisible(driver, `//android.widget.TextView[@text="T ID로 T world에 로그인해 보세요"]`)) {
         if (await isVisible(driver, `//android.app.AlertDialog[@resource-id="modalAlert1"]/android.view.View/android.view.View`)) {
@@ -358,7 +361,10 @@ test(`Native AOS 080: AOS 위치 옵션 끄고 AI Layer 최초 진입`, async ({
 
 test(`Native AOS 082: AOS 앱 알림 허용 끄고 AI Layer 최초 진입`, async ({ driver }) => {
     resetPermission("android.permission.POST_NOTIFICATIONS", TWD);
+    await driver.terminateApp(TWD);
+    await driver.activateApp(TWD);
     await driver.pause(2000);
+    await waitVisible(driver, aiBtn);
     await safeClick(driver, aiBtn);
     if (await isVisible(driver, `//android.widget.TextView[@text="T ID로 T world에 로그인해 보세요"]`)) {
         if (await isVisible(driver, `//android.app.AlertDialog[@resource-id="modalAlert1"]/android.view.View/android.view.View`)) {

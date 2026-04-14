@@ -325,6 +325,7 @@ test(`Native iOS 017: 권한 허용 안내에서 [설정] 클릭`, async ({ driv
     expect(await waitVisible(driver, `//XCUIElementTypeStaticText[@name="[STG] T world"]`)).toBeTruthy();
 });
 */
+
 test.describe(`Native iOS 018`, () => {
     test.use({ bundleId: SETTINGS_BUNDLE_ID });
     test.beforeAll(async ({ driver }) => {

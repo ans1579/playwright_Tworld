@@ -1,6 +1,19 @@
 // tests/qaTest/shared/actions/ui.ts
 import type { Browser } from "webdriverio";
 
+type RecoveryRunner = <T>(action: (driver: Browser) => Promise<T>) => Promise<T>;
+
+function withSessionRecovery<T>(
+    driver: Browser,
+    action: (activeDriver: Browser) => Promise<T>
+): Promise<T> {
+    const runner = (driver as any).__runWithRecovery as RecoveryRunner | undefined;
+    if (typeof runner === 'function') {
+        return runner(action);
+    }
+    return action(driver);
+}
+
 async function withHardTimeout<T>(work: Promise<T>, timeoutMs: number, label: string): Promise<T> {
     let timer: NodeJS.Timeout | null = null;
     try {
@@ -20,14 +33,14 @@ export async function waitVisible(
     selector: string,
     timeoutMs = 5000
 ) {
-    const run = async () => {
+    const run = async (activeDriver: Browser) => {
         const retryCount = 2;
         const retryMs = 150;
         let lastError: unknown;
 
         for (let i = 0; i <= retryCount; i++) {
             try {
-                const el = await driver.$(selector);
+                const el = await activeDriver.$(selector);
                 await el.waitForDisplayed({ timeout: timeoutMs });
                 return el;
             } catch (error) {
@@ -36,7 +49,7 @@ export async function waitVisible(
                     throw error;
                 }
                 if (i < retryCount) {
-                    await driver.pause(retryMs);
+                    await activeDriver.pause(retryMs);
                 }
             }
         }
@@ -44,8 +57,9 @@ export async function waitVisible(
         throw lastError ?? new Error(`waitVisible 실패 :: selector = ${selector}`);
     };
 
-    if (!isAndroidDriver(driver)) return run();
-    return withHardTimeout(run(), timeoutMs + 12000, 'waitVisible');
+    const work = withSessionRecovery(driver, run);
+    if (!isAndroidDriver(driver)) return work;
+    return withHardTimeout(work, timeoutMs + 12000, 'waitVisible');
 }
 
 export async function readText(
@@ -137,8 +151,14 @@ function toKoreanReason(err: unknown): string {
 function isSessionTerminatedError(err: unknown): boolean {
     const msg = getErrorMessage(err);
     return (
+        msg.includes('invalid session id') ||
         msg.includes('A session is either terminated or not started') ||
         msg.includes('socket hang up') ||
+        msg.includes('WebDriverAgent is not running') ||
+        msg.includes('xcodebuild exited with code') ||
+        msg.includes('Failed to create WDA session') ||
+        msg.includes('Could not proxy command to the remote server') ||
+        msg.includes('Connection was refused to port') ||
         msg.includes('instrumentation process is not running') ||
         msg.includes('instrumentation process cannot be initialized') ||
         msg.includes('The operation was aborted due to timeout') ||
@@ -206,7 +226,7 @@ export async function safeClick(
     selector: string,
     opts?: SafeClickOptions
 ) {
-    const run = async () => {
+    const run = async (activeDriver: Browser) => {
         const timeoutMs = opts?.timeoutMs ?? 10000;
         const intervalMs = opts?.intervalMs ?? 80;
         const retryCount = opts?.retryCount ?? 2;
@@ -228,7 +248,7 @@ export async function safeClick(
                     : remaining;
 
             try {
-                const el = await driver.$(selector);
+                const el = await activeDriver.$(selector);
 
             let displayedError: unknown;
             try {
@@ -261,14 +281,14 @@ export async function safeClick(
                 await el.click();
                 return el;
             } catch (clickErr) {
-                const clickedByGesture = await tryAndroidClickGesture(driver, el).catch(() => false);
+                const clickedByGesture = await tryAndroidClickGesture(activeDriver, el).catch(() => false);
                 if (clickedByGesture) {
                     return el;
                 }
 
                 if (useCenterTapFallback) {
                     try {
-                        await tapElementCenter(driver, el);
+                        await tapElementCenter(activeDriver, el);
                         return el;
                     } catch (centerErr) {
                         lastError = centerErr ?? clickErr;
@@ -287,7 +307,7 @@ export async function safeClick(
                 if (i < retryCount) {
                     const pauseMs = Math.min(retryMs + i * 40, Math.max(0, deadline - Date.now()));
                     if (pauseMs > 0) {
-                        await driver.pause(pauseMs);
+                        await activeDriver.pause(pauseMs);
                     }
                 }
             }
@@ -299,8 +319,9 @@ export async function safeClick(
         );
     };
 
-    if (!isAndroidDriver(driver)) return run();
-    return withHardTimeout(run(), (opts?.timeoutMs ?? 10000) + 18000, `safeClick(${selector})`);
+    const work = withSessionRecovery(driver, run);
+    if (!isAndroidDriver(driver)) return work;
+    return withHardTimeout(work, (opts?.timeoutMs ?? 10000) + 18000, `safeClick(${selector})`);
 }
 
 export async function clickPass(driver: Browser, selector: string, timeout = 3000) {

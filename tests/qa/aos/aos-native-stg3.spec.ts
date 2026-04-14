@@ -187,6 +187,7 @@ test(`Native AOS 064: 정회원 로그인 후 TWD/TDS 각 메인에서 바텀 na
     expect(ok).toBe(true);
     await safeClick(driver, `//android.widget.Button[@content-desc="서비스 종료"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="T 다이렉트샵"]`);
+    await driver.pause(3000);
     if (await waitVisible(driver, `//android.view.View[@text="T direct shop"]`)) {
         await safeClick(driver, aiBtn);
     }

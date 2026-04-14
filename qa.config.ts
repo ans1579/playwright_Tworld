@@ -11,6 +11,7 @@ const IOS_WDA_LOCAL_PORT_1 = Number(process.env.IOS_WDA_LOCAL_PORT_1 ?? 8102);
 const IOS_WDA_LOCAL_PORT_2 = Number(process.env.IOS_WDA_LOCAL_PORT_2 ?? 8103);
 const IOS_RETRIES = 1;
 const AOS_RETRIES = 1;
+const QA_CASE_TIMEOUT_MS = Number(process.env.QA_CASE_TIMEOUT_MS ?? 210000);
 
 function isIosDeviceConnected(udid: string): boolean {
   if (!udid) return false;
@@ -35,6 +36,7 @@ const projects: any[] = [
     name: 'qa-ios',
     testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
     retries: IOS_RETRIES,
+    timeout: QA_CASE_TIMEOUT_MS,
     use: {
       udid: IOS_UDID_1,
       appiumHost: IOS_APPIUM_HOST,
@@ -50,6 +52,7 @@ if (enableIos2) {
     name: 'qa-ios-2',
     testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
     retries: IOS_RETRIES,
+    timeout: QA_CASE_TIMEOUT_MS,
     use: {
       udid: IOS_UDID_2,
       appiumHost: IOS_APPIUM_HOST,
@@ -66,6 +69,7 @@ projects.push({
   name: 'qa-aos',
   testMatch: /tests\/qa\/aos\/.*\.spec\.ts/,
   retries: AOS_RETRIES,
+  timeout: Number(process.env.QA_AOS_TEST_TIMEOUT ?? QA_CASE_TIMEOUT_MS),
 });
 
 export default defineConfig({

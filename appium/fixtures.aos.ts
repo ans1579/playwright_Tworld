@@ -71,8 +71,8 @@ export const test = base.extend<Fixtures>({
             path: APPIUM_PATH,
             capabilities: makeAosCaps({ appPackage, appActivity }),
             logLevel: 'error',
-            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 180000),
-            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 2),
+            connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 60000),
+            connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 1),
         }));
 
         try {
@@ -84,6 +84,8 @@ export const test = base.extend<Fixtures>({
     // 기본은 원래 WDIO 체이너블 driver 유지
     driver: async({ driverManager }, use) => {
         const driver = await driverManager.ensureAlive();
+        (driver as any).__runWithRecovery = <T>(action: (d: Browser) => Promise<T>) =>
+            driverManager.runWithRecovery(action);
         await use(driver);
     },
     // 필요 구간에서만 복구 래퍼 사용

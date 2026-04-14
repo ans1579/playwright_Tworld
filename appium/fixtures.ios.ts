@@ -61,17 +61,6 @@ function createIosDriverManager(options: SessionKeyOptions): DriverManager {
         connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 0),
     }));
 
-    // 기존 ensureAlive가 안드로이드 전용이라 보강해서 iOS에서 사용
-    mgr.ensureAlive = async () => {
-        try {
-            const d = await mgr.get();
-            await d.getPageSource();
-            return d;
-        } catch {
-            return await mgr.recreate();
-        }
-    };
-
     return mgr;
 }
 
@@ -129,7 +118,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     },
 
     driver: async ({ driverManager }, use) => {
-        const driver = await driverManager.get();
+        const driver = await driverManager.ensureAlive();
+        (driver as any).__runWithRecovery = <T>(action: (d: Browser) => Promise<T>) =>
+            driverManager.runWithRecovery(action);
         // iOS 클릭 후 내부 애니메이션 대기시간을 줄여 전체 템포 개선
         await (driver as any).updateSettings?.({ animationCoolOffTimeout: 0 }).catch(() => {});
         await use(driver);
