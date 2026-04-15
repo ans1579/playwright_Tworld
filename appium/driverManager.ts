@@ -30,18 +30,115 @@ export const isUia2DeadError = isSessionDeadError;
 
 export class DriverManager {
   private driver: Browser | null = null;
+  private createInFlight: Promise<Browser> | null = null;
+  private createInFlightPhase: 'create' | 'recreate' | null = null;
+  private readonly sessionCreateTimeoutMs = Number(process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? 60000);
+  private readonly sessionRecreateTimeoutMs = Number(process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? 60000);
+  private readonly sessionCreateAttempts = Math.max(1, Number(process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? 2));
+  private readonly sessionRecreateAttempts = Math.max(1, Number(process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? 2));
+  private readonly createRetryDelayMs = Math.max(0, Number(process.env.APPIUM_SESSION_CREATE_RETRY_DELAY_MS ?? 1500));
+  private readonly recreateRetryDelayMs = Math.max(0, Number(process.env.APPIUM_SESSION_RECREATE_RETRY_DELAY_MS ?? 2000));
 
-  constructor(private makeRemoteOpts: () => any) {}
+  constructor(
+    private makeRemoteOpts: () => any,
+    private hooks?: {
+      beforeCreate?: (phase: 'create' | 'recreate') => Promise<void> | void;
+      onCreateError?: (phase: 'create' | 'recreate', attempt: number, error: unknown) => Promise<void> | void;
+    }
+  ) {}
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async createSessionWithTimeout(timeoutMs: number, phase: 'create' | 'recreate'): Promise<Browser> {
+    let timer: NodeJS.Timeout | null = null;
+    const timeoutMessage = `세션 ${phase} 타임아웃(${timeoutMs}ms)`;
+    let remotePromise: Promise<Browser> | null = null;
+    try {
+      await this.hooks?.beforeCreate?.(phase);
+      remotePromise = remote(this.makeRemoteOpts());
+      return await Promise.race([
+        remotePromise,
+        new Promise<Browser>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(timeoutMessage));
+          }, timeoutMs);
+        }),
+      ]);
+    } catch (error) {
+      // Promise.race 타임아웃으로 빠져나와도 remote 호출은 백그라운드에서 살아있을 수 있음
+      // 후속 시도에서 unhandled rejection 경고를 피하기 위해 catch를 붙여둔다.
+      if ((error as Error)?.message?.includes(timeoutMessage) && remotePromise) {
+        void remotePromise.catch(() => {});
+      }
+      throw error;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  private async createSessionWithRetry(phase: 'create' | 'recreate'): Promise<Browser> {
+    const timeoutMs = phase === 'create' ? this.sessionCreateTimeoutMs : this.sessionRecreateTimeoutMs;
+    const attempts = phase === 'create' ? this.sessionCreateAttempts : this.sessionRecreateAttempts;
+    const delayMs = phase === 'create' ? this.createRetryDelayMs : this.recreateRetryDelayMs;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        return await this.createSessionWithTimeout(timeoutMs, phase);
+      } catch (error) {
+        lastError = error;
+        await this.hooks?.onCreateError?.(phase, attempt, error);
+
+        if (attempt >= attempts) break;
+        console.warn(
+          `[driver] 세션 ${phase} 실패(${attempt}/${attempts}) -> 정리 후 재시도 :: 원인=${(error as Error)?.message ?? String(error)}`
+        );
+        if (delayMs > 0) {
+          await this.sleep(delayMs);
+        }
+      }
+    }
+
+    throw lastError ?? new Error(`세션 ${phase} 실패`);
+  }
+
+  private async createOrJoin(phase: 'create' | 'recreate', forceNew = false): Promise<Browser> {
+    if (this.createInFlight) {
+      if (!forceNew && this.createInFlightPhase === phase) {
+        return this.createInFlight;
+      }
+      try {
+        await this.createInFlight;
+      } catch {}
+    }
+
+    if (!forceNew && this.driver) return this.driver;
+
+    this.createInFlightPhase = phase;
+    this.createInFlight = this.createSessionWithRetry(phase)
+      .then((created) => {
+        this.driver = created;
+        return created;
+      })
+      .finally(() => {
+        this.createInFlight = null;
+        this.createInFlightPhase = null;
+      });
+
+    return this.createInFlight;
+  }
 
   async get(): Promise<Browser> {
-    if (!this.driver) this.driver = await remote(this.makeRemoteOpts());
-    return this.driver;
+    if (this.driver) return this.driver;
+    return await this.createOrJoin('create');
   }
 
   async recreate(): Promise<Browser> {
     try { await this.driver?.deleteSession(); } catch {}
-    this.driver = await remote(this.makeRemoteOpts());
-    return this.driver;
+    this.driver = null;
+    return await this.createOrJoin('recreate', true);
   }
 
   async runWithRecovery<T>(
@@ -73,6 +170,7 @@ export class DriverManager {
   }
 
   async dispose(): Promise<void> {
+    try { await this.createInFlight; } catch {}
     try { await this.driver?.deleteSession(); } catch {}
     this.driver = null;
   }

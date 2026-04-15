@@ -12,5 +12,5 @@ export const WDA_LOCAL_PORT = 8102;
 
 // APPIUM 서버 기본값 (ios-01)
 export const APPIUM_HOST = '127.0.0.1';
-export const APPIUM_PORT = 4724;
+export const APPIUM_PORT = 5005;
 export const APPIUM_PATH = '/';

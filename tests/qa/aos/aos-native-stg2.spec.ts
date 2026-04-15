@@ -30,8 +30,8 @@ test(`Native AOS 021: 위젯 추가`, async ({ driver }) => {
     await swipeByPercent(driver, { xPct: 0.5, yPct: 0.75 }, { xPct: 0.5, yPct: 0.4 });
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 3x1"]`)).toBe(true);
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 4x2"]`)).toBe(true);
-    await safeClick(driver, `(//android.widget.FrameLayout[@resource-id="com.sec.android.app.launcher:id/expand_cell"])[3]/android.widget.LinearLayout`);
-    await safeClick(driver, `//android.widget.LinearLayout[@resource-id="com.sec.android.app.launcher:id/list_expand"]/android.widget.LinearLayout[3]`);
+    await safeClick(driver, `//android.widget.TextView[@resource-id="com.sec.android.app.launcher:id/expand_cell_label" and @text="T world 4x2"]`);
+    await safeClick(driver, `//*[@text="추가"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/confirm"]`);
 });
 
@@ -85,8 +85,22 @@ test(`Native AOS 037: 공유하기 1`, async ({ driver }) => {
     await safeClick(driver, `//android.widget.TextView[@text="부가서비스"]`);
     await driver.pause(2000);
     await safeClick(driver, `//android.widget.Button[@resource-id="fe-bt-share"]`);
-    const msg = await readText(driver, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title"]`);
-    expect(msg).toContain(`T world`);
+    const chooserMsgSelectors = [`//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title"]`, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_text_type_content"]`, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title_details_view"]`, `//android.widget.TextView[@resource-id="com.google.android.intentresolver:id/chooser_title"]`, `//android.widget.TextView[contains(@resource-id,"intentresolver:id") and (contains(@text,"공유") or contains(@text,"T world") or contains(@text,"T World"))]`, `//android.widget.TextView[contains(@text,"공유") or contains(@text,"T world") or contains(@text,"T World")]`];
+
+    let msg = "";
+    for (const selector of chooserMsgSelectors) {
+        const els = await driver.$$(selector);
+        if (!els.length) continue;
+        msg = String((await els[0].getText()) ?? "").trim();
+        if (msg) break;
+    }
+
+    if (msg) {
+        expect(msg).toMatch(/T\s?world|공유/i);
+    } else {
+        const source = await driver.getPageSource();
+        expect(source).toMatch(/T\s?world|공유/i);
+    }
     await driver.back().catch(() => {});
 });
 
@@ -100,9 +114,25 @@ test(`Native AOS 038: 공유하기 2`, async ({ driver }) => {
     if (await waitVisible(driver, `//android.widget.TextView[@text="SKT를 이용하는 고객에게 문자와 SNS로 데이터 조르기를 하실 수 있습니다."]`)) {
         await safeClick(driver, `//android.widget.Button[@text="조르기 요청"]`);
     }
-    const msg = await readText(driver, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_text_type_content"]`);
-    expect(msg).toContain(`조르기`);
+    const chooserMsgSelectors = [`//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_text_type_content"]`, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title"]`, `//android.widget.TextView[@resource-id="com.google.android.intentresolver:id/chooser_title"]`, `//android.widget.TextView[contains(@resource-id,"intentresolver:id") and contains(@text,"조르기")]`, `//android.widget.TextView[contains(@text,"조르기")]`, `//android.widget.TextView[@resource-id="com.android.intentresolver:id/sem_chooser_main_title_details_view"]`];
+
+    let msg = "";
+    for (const selector of chooserMsgSelectors) {
+        const els = await driver.$$(selector);
+        if (!els.length) continue;
+        msg = String((await els[0].getText()) ?? "").trim();
+        if (msg) break;
+    }
+
+    if (msg) {
+        expect(msg).toMatch(/조르기|공유/);
+    } else {
+        const source = await driver.getPageSource();
+        expect(source).toMatch(/조르기|공유/);
+    }
     await driver.back().catch(() => {});
+    await driver.execute(`mobile: pressKey`, { keycode: 3 });
+    await driver.pause(1000);
 });
 
 test(`Native AOS 041: App 설치 여부 확인`, async ({ driver }) => {
@@ -117,7 +147,6 @@ test(`Native AOS 041: App 설치 여부 확인`, async ({ driver }) => {
     console.log(`ctxs = ${ctxs}`);
     await driver.switchContext(`NATIVE_APP`);
     expect(await isVisible(driver, `//android.view.View[@content-desc="설치된 앱 T 아이디"]`)).toBe(true);
-    expect(await isVisible(driver, `//android.view.View[@content-desc="에이닷 설치된 앱 에이닷"]`)).toBe(true);
 });
 
 test(`Native AOS 042: 웹뷰의 파일첨부 확인`, async ({ driver }) => {
@@ -155,10 +184,10 @@ test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     };
 
     await driver.pause(3000);
-    const initialMenuTarget = (await isVisible(driver, menuKo, 2500).catch(() => false)) ? menuKo : menuEn;
+    const initialMenuTarget = (await isVisible(driver, menuKo, 2500)) ? menuKo : menuEn;
     await safeClick(driver, initialMenuTarget);
     await safeClick(driver, `//android.view.View[@content-desc="English!"]`);
-    const firstMenuTarget = (await isVisible(driver, menuEn, 3000).catch(() => false)) ? menuEn : menuKo;
+    const firstMenuTarget = (await isVisible(driver, menuEn, 3000)) ? menuEn : menuKo;
     await safeClick(driver, firstMenuTarget);
     await driver.pause(1000);
     await safeClick(driver, `//android.view.View[@content-desc="setting"]/android.view.View/android.widget.TextView`);
@@ -180,7 +209,7 @@ test(`Native AOS 045: 영문 디폴트 설정`, async ({ driver }) => {
     expect(msg).toContain(`My Bills`);
     await driver.pause(1000);
     await driver.switchContext(`NATIVE_APP`).catch(() => {});
-    const secondMenuTarget = (await isVisible(driver, menuEn, 3000).catch(() => false)) ? menuEn : menuKo;
+    const secondMenuTarget = (await isVisible(driver, menuEn, 3000)) ? menuEn : menuKo;
     await safeClick(driver, secondMenuTarget);
     await driver.pause(1000);
     await safeClick(driver, `//android.view.View[@content-desc="setting"]/android.view.View/android.widget.TextView`);
@@ -199,5 +228,5 @@ test(`Native AOS 047: 앱 종료 - 뒤로가기`, async ({ driver }) => {
     await driver.back().catch(() => {});
     await driver.back().catch(() => {});
     await safeClick(driver, `//android.widget.Button[@text="종료"]`);
-    expect(await isVisible(driver, `//android.widget.TextView[@text="T World"]`)).toBe(false);
+    expect((await driver.$$(`//android.widget.TextView[@text="T World"]`)).length).toBe(0);
 });

@@ -57,12 +57,12 @@ test(`Native AOS 059: Bottom navi. AI 추천 버튼 비로그인 상태 클릭`,
         await safeClick(driver, `//android.widget.Button[@text="알림 받기"]`);
     }
     const target = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, target, 3000).catch(() => false);
+    let ok = await isVisible(driver, target, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, target, 5000).catch(() => false);
+        ok = await isVisible(driver, target, 5000);
     }
     expect(ok).toBe(true);
 });
@@ -96,12 +96,12 @@ test(`Native AOS 060: Bottom navi. AI 추천 버튼 로그인 상태 클릭`, as
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/main"]/android.webkit.WebView/android.webkit.WebView`);
     }
     const target = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, target, 3000).catch(() => false);
+    let ok = await isVisible(driver, target, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, target, 5000).catch(() => false);
+        ok = await isVisible(driver, target, 5000);
     }
     expect(ok).toBe(true);
 });
@@ -177,12 +177,12 @@ test(`Native AOS 064: 정회원 로그인 후 TWD/TDS 각 메인에서 바텀 na
     }
 
     const targetTwd = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, targetTwd, 3000).catch(() => false);
+    let ok = await isVisible(driver, targetTwd, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, targetTwd, 5000).catch(() => false);
+        ok = await isVisible(driver, targetTwd, 5000);
     }
     expect(ok).toBe(true);
     await safeClick(driver, `//android.widget.Button[@content-desc="서비스 종료"]`);
@@ -193,12 +193,12 @@ test(`Native AOS 064: 정회원 로그인 후 TWD/TDS 각 메인에서 바텀 na
     }
     await driver.pause(3000);
     const targetTds = `//android.widget.Spinner[@text="T 다이렉트샵"]`;
-    ok = await isVisible(driver, targetTds, 3000).catch(() => false);
+    ok = await isVisible(driver, targetTds, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, targetTds, 5000).catch(() => false);
+        ok = await isVisible(driver, targetTds, 5000);
     }
     expect(ok).toBe(true);
 });

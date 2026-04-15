@@ -324,14 +324,17 @@ export async function safeClick(
     return withHardTimeout(work, (opts?.timeoutMs ?? 10000) + 18000, `safeClick(${selector})`);
 }
 
-export async function clickPass(driver: Browser, selector: string, timeout = 3000) {
+export async function clickPass(driver: Browser, selector: string, timeout = 8000) {
     try {
         const el = await driver.$(selector);
         await el.waitForDisplayed({ timeout });
         await el.click();
-        console.log(`Clicked element: ${selector}`);
+        console.log(`클릭 성공: ${selector}`);
     } catch (error) {
-        console.warn(`Failed to click element: ${selector}`, error);
+        if (isSessionTerminatedError(error)) {
+            throw error;
+        }
+        console.warn(`클릭 실패(계속 진행): ${selector}`, error);
     }
 }
 

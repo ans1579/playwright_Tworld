@@ -1,9 +1,9 @@
 import type { Browser } from "webdriverio";
 import { execFileSync } from "node:child_process";
-import { ANDROID_UDID } from "@appium/aos/env.aos";
 import { isVisible, safeClick } from "@tests/_shared/actions/ui";
 
 export const TWD = `Com.sktelecom.minit.ad.stg`;
+const CHROME_PACKAGE = `com.android.chrome`;
 export const logout = `//android.widget.TextView[@text="로그아웃"]`;
 export const aiBtn = `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/aiButtonArea"]`;
 export const nudge = `//android.widget.Button[@text="nudge"]`;
@@ -14,31 +14,45 @@ export const MENU_BTN = `//android.widget.TextView[@resource-id="Com.sktelecom.m
 const INTRO_TITLE = `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`;
 const INTRO_CANCEL = `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`;
 
-export function adbShell(args: string[]) {
-    const adbPath = process.env.ADB_PATH || "adb";
-    execFileSync(adbPath, ["-s", ANDROID_UDID, "shell", ...args], { stdio: "ignore" });
+export function getDriverUdid(driver: Browser): string {
+    const udid = (driver as any)?.capabilities?.udid ?? (driver as any)?.capabilities?.['appium:udid'];
+    if (!udid) {
+        throw new Error(`driver capabilities에 udid가 없습니다.`);
+    }
+    return String(udid);
 }
 
-export function resetPermission(permission: string, appPackage = TWD) {
+export function adbShell(args: string[], udid: string) {
+    const adbPath = process.env.ADB_PATH || "adb";
+    execFileSync(adbPath, ["-s", udid, "shell", ...args], { stdio: "ignore" });
+}
+
+export function resetPermission(permission: string, appPackage = TWD, udid: string) {
     try {
-        adbShell(["pm", "revoke", appPackage, permission]);
+        adbShell(["pm", "revoke", appPackage, permission], udid);
     } catch {}
 
     for (const flag of ["user-set", "user-fixed"]) {
         try {
-            adbShell(["pm", "clear-permission-flags", appPackage, permission, flag]);
+            adbShell(["pm", "clear-permission-flags", appPackage, permission, flag], udid);
         } catch {}
     }
 }
 
-export function resetPermissions(permissions: string[], appPackage = TWD) {
+export function resetPermissions(permissions: string[], appPackage = TWD, udid: string) {
     for (const permission of permissions) {
-        resetPermission(permission, appPackage);
+        resetPermission(permission, appPackage, udid);
     }
 }
 
-export function clearAppData(appPackage = TWD) {
-    adbShell(["pm", "clear", appPackage]);
+export function clearAppData(appPackage = TWD, udid: string) {
+    adbShell(["pm", "clear", appPackage], udid);
+}
+
+export function forceStopChrome(udid: string) {
+    try {
+        adbShell(["am", "force-stop", CHROME_PACKAGE], udid);
+    } catch {}
 }
 
 export async function closeIntroIfPresent(driver: Browser) {
@@ -81,6 +95,9 @@ export async function defaultBeforeEach(
     skipTitles: string[] = []
 ) {
     const skipRestart = !!testInfo && skipTitles.some((s) => testInfo.title.includes(s));
+    const udid = getDriverUdid(driver);
+
+    forceStopChrome(udid);
 
     if (!skipRestart) {
         await restartTwdApp(driver, 2000);

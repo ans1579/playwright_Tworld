@@ -2,7 +2,7 @@ import { test, expect } from "@appium/fixtures.aos";
 import { getHorizontal, getVertical, isVisible, readText, safeClick, waitVisible } from "@tests/_shared/actions/ui";
 import { getAndSwitchToWebviewAos } from "@tests/_shared/actions/webview";
 import { assertScrollable, swipeLeftAos } from "@tests/_shared/actions/scroll";
-import { TWD, MENU_BTN, SSO_ID, adbShell, aiBtn, defaultBeforeEach, logout, nudge, nudgeBtn, resetPermission, resetPermissions } from "./aos-native-stg.shared";
+import { TWD, MENU_BTN, SSO_ID, adbShell, aiBtn, defaultBeforeEach, getDriverUdid, logout, nudge, nudgeBtn, resetPermission, resetPermissions } from "./aos-native-stg.shared";
 
 test.use({ appPackage: TWD });
 
@@ -41,12 +41,12 @@ test(`Native AOS 066: 비로그인 상태에서 메시지 넛징 선택`, async 
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="${TWD}:id/main"]/android.webkit.WebView/android.webkit.WebView`);
     }
     const target = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, target, 3000).catch(() => false);
+    let ok = await isVisible(driver, target, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, target, 5000).catch(() => false);
+        ok = await isVisible(driver, target, 5000);
     }
     expect(ok).toBe(true);
     const msg = await readText(driver, target);
@@ -74,22 +74,25 @@ test(`Native AOS 067: 로그인 상태에서 메시지 넛징 선택`, async ({ 
     await safeClick(driver, `//android.widget.Button[@resource-id="android:id/button1"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="홈"]`);
     await driver.pause(3000);
+
     if (await isVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)) {
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`);
     }
     await driver.pause(5000);
+
     if (await isVisible(driver, `//android.view.View[@content-desc="시작하기"]`)) {
         await safeClick(driver, `//android.view.View[@content-desc="시작하기"]`);
         await driver.pause(3000);
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="${TWD}:id/main"]/android.webkit.WebView/android.webkit.WebView`);
     }
+
     const target = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, target, 3000).catch(() => false);
+    let ok = await isVisible(driver, target, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, target, 5000).catch(() => false);
+        ok = await isVisible(driver, target, 5000);
     }
     expect(ok).toBe(true);
     const msg = await readText(driver, target);
@@ -172,12 +175,12 @@ test(`Native AOS 071: 정회원 로그인 후 각 메인에서 메시지 넛징 
     }
     await driver.pause(6000);
     const targetTwd = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, targetTwd, 3000).catch(() => false);
+    let ok = await isVisible(driver, targetTwd, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, targetTwd, 5000).catch(() => false);
+        ok = await isVisible(driver, targetTwd, 5000);
     }
     expect(ok).toBe(true);
     const twdMsg = await readText(driver, targetTwd);
@@ -190,12 +193,12 @@ test(`Native AOS 071: 정회원 로그인 후 각 메인에서 메시지 넛징 
     }
     await driver.pause(6000);
     const targetTds = `//android.widget.Spinner[@text="T 다이렉트샵"]`;
-    ok = await isVisible(driver, targetTds, 3000).catch(() => false);
+    ok = await isVisible(driver, targetTds, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, targetTds, 5000).catch(() => false);
+        ok = await isVisible(driver, targetTds, 5000);
     }
     expect(ok).toBe(true);
     const tdsMsg = await readText(driver, targetTds);
@@ -214,12 +217,12 @@ test(`Native AOS 072: 메시지 넛징 노출 후 x 영역 터치`, async ({ dri
     if (await isVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)) {
         await safeClick(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]/android.view.View`);
     }
-    expect(await isVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).toBe(false);
+    expect((await driver.$$(`//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).length).toBe(0);
 });
 
 test(`Native AOS 073: 앱 재실행 후 같은 계정으로 로그인`, async ({ driver }) => {
     await driver.pause(3000);
-    expect(await isVisible(driver, `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).toBe(false);
+    expect((await driver.$$(`//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/nudgeMsgLayout"]`)).length).toBe(0);
 });
 
 test(`Native AOS 074: 각 채널에 맞는 메시지 넛징 노출 확인`, async ({ driver }) => {
@@ -281,12 +284,12 @@ test(`Native AOS 075: AI Layer 진입`, async ({ driver }) => {
     }
     await driver.pause(3000);
     const target = `//android.widget.Spinner[@text="전체 AI 추천"]`;
-    let ok = await isVisible(driver, target, 3000).catch(() => false);
+    let ok = await isVisible(driver, target, 3000);
     if (!ok) {
         await safeClick(driver, `//android.widget.Button[@text="다음 슬라이드로 이동"]`).catch(() => {});
         await swipeLeftAos(driver);
         await driver.pause(1000);
-        ok = await isVisible(driver, target, 5000).catch(() => false);
+        ok = await isVisible(driver, target, 5000);
     }
     expect(ok).toBe(true);
 });
@@ -308,7 +311,7 @@ test(`Native AOS 076: AI Layer 종료`, async ({ driver }) => {
     }
     await safeClick(driver, `//android.widget.Button[@content-desc="서비스 종료"]`);
     await driver.pause(3000);
-    expect(await isVisible(driver, `//android.widget.Spinner[@text="전체 AI 추천"]`)).toBe(false);
+    expect((await driver.$$(`//android.widget.Spinner[@text="전체 AI 추천"]`)).length).toBe(0);
 });
 
 test(`Native AOS 079: AI Layer 진입 후 Type1 화면 진입 및 스크롤링, 닫힘 확인`, async ({ driver }) => {
@@ -339,7 +342,8 @@ test(`Native AOS 079: AI Layer 진입 후 Type1 화면 진입 및 스크롤링, 
 });
 
 test(`Native AOS 080: AOS 위치 옵션 끄고 AI Layer 최초 진입`, async ({ driver }) => {
-    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD);
+    const udid = getDriverUdid(driver);
+    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD, udid);
     await driver.terminateApp(TWD);
     await driver.activateApp(TWD);
     await driver.pause(2000);
@@ -355,12 +359,13 @@ test(`Native AOS 080: AOS 위치 옵션 끄고 AI Layer 최초 진입`, async ({
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="com.android.permissioncontroller:id/permission_message"]`)).toBe(true);
     await safeClick(driver, `//android.widget.Button[@resource-id="com.android.permissioncontroller:id/permission_allow_foreground_only_button"]`);
     await driver.pause(3000);
-    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_FINE_LOCATION"]);
-    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_COARSE_LOCATION"]);
+    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_FINE_LOCATION"], udid);
+    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_COARSE_LOCATION"], udid);
 });
 
 test(`Native AOS 082: AOS 앱 알림 허용 끄고 AI Layer 최초 진입`, async ({ driver }) => {
-    resetPermission("android.permission.POST_NOTIFICATIONS", TWD);
+    const udid = getDriverUdid(driver);
+    resetPermission("android.permission.POST_NOTIFICATIONS", TWD, udid);
     await driver.terminateApp(TWD);
     await driver.activateApp(TWD);
     await driver.pause(2000);
@@ -392,6 +397,6 @@ test(`Native AOS 082: AOS 앱 알림 허용 끄고 AI Layer 최초 진입`, asyn
     await driver.pause(6000);
     expect(await isVisible(driver, `//android.widget.TextView[@content-desc="다양한 AI 추천들을 푸시 알림으로 받아 보세요!"]`)).toBe(true);
     await safeClick(driver, `//android.widget.Button[@text="알림 받기"]`);
-    adbShell(["pm", "grant", TWD, "android.permission.POST_NOTIFICATIONS"]);
+    adbShell(["pm", "grant", TWD, "android.permission.POST_NOTIFICATIONS"], udid);
     await driver.pause(1000);
 });

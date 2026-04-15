@@ -1,7 +1,7 @@
 import { test, expect } from "@appium/fixtures.aos";
 import { clickPass, isVisible, readText, safeClick, waitVisible } from "@tests/_shared/actions/ui";
 import { swipeUpAos, tapCellWithScrollAos } from "@tests/_shared/actions/scroll";
-import { TWD, logout, adbShell, clearAppData, defaultBeforeEach, resetPermissions } from "./aos-native-stg.shared";
+import { TWD, logout, adbShell, clearAppData, defaultBeforeEach, getDriverUdid, resetPermissions } from "./aos-native-stg.shared";
 
 test.use({ appPackage: TWD });
 
@@ -14,7 +14,7 @@ test.beforeEach(async ({ driver }, testInfo) => {
 });
 test(`Native AOS 005: 로그인 안한 상태에서 로그인하기`, async ({ driver }) => {
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
-    const isLogIn = await isVisible(driver, logout).catch(() => false);
+    const isLogIn = await isVisible(driver, logout);
 
     if (isLogIn) {
         await safeClick(driver, logout);
@@ -54,10 +54,12 @@ test(`Native AOS 006: 로그인 상태에서 앱을 종료 후 재실행`, async
 test(`Native AOS 008: 로그아웃 팝업`, async ({ driver }) => {
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
     await safeClick(driver, logout);
+    await waitVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`);
+    const msg = await readText(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`);
+    expect(msg).toContain(`로그아웃`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/submit"]`);
     await safeClick(driver, `//android.widget.TextView[@text="홈으로"]`);
-    await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
-    expect(await isVisible(driver, logout)).toBe(false);
+    await driver.pause(1000);
 });
 
 test(`Native AOS 009: 회원가입`, async ({ driver }) => {
@@ -86,7 +88,8 @@ test(`Native AOS 010: T ID 정보 확인`, async ({ driver }) => {
 });
 
 test(`Native AOS 011: 앱 최초 실행 - 접근 권한 안내`, async ({ driver }) => {
-    clearAppData(TWD);
+    const udid = getDriverUdid(driver);
+    clearAppData(TWD, udid);
     try {
         await driver.terminateApp(TWD);
     } catch {}
@@ -99,7 +102,8 @@ test(`Native AOS 011: 앱 최초 실행 - 접근 권한 안내`, async ({ driver
 });
 
 test(`Native AOS 012: 앱 최초 실행 - 전화 권한`, async ({ driver }) => {
-    clearAppData(TWD);
+    const udid = getDriverUdid(driver);
+    clearAppData(TWD, udid);
     try {
         await driver.terminateApp(TWD);
     } catch {}
@@ -116,7 +120,8 @@ test(`Native AOS 012: 앱 최초 실행 - 전화 권한`, async ({ driver }) => 
 });
 
 test(`Native AOS 013: 앱 최초 실행 - 알림 권한`, async ({ driver }) => {
-    clearAppData(TWD);
+    const udid = getDriverUdid(driver);
+    clearAppData(TWD, udid);
     try {
         await driver.terminateApp(TWD);
     } catch {}
@@ -133,7 +138,8 @@ test(`Native AOS 013: 앱 최초 실행 - 알림 권한`, async ({ driver }) => 
 });
 
 test(`Native AOS 014: 앱 최초 실행 - 주소록 권한`, async ({ driver }) => {
-    clearAppData(TWD);
+    const udid = getDriverUdid(driver);
+    clearAppData(TWD, udid);
     try {
         await driver.terminateApp(TWD);
     } catch {}
@@ -161,7 +167,8 @@ test(`Native AOS 014: 앱 최초 실행 - 주소록 권한`, async ({ driver }) 
 });
 
 test(`Native AOS 017: 위치 권한`, async ({ driver }) => {
-    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD);
+    const udid = getDriverUdid(driver);
+    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD, udid);
     await driver.terminateApp(TWD);
     await driver.activateApp(TWD);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
@@ -183,7 +190,8 @@ test(`Native AOS 017: 위치 권한`, async ({ driver }) => {
 });
 
 test(`Native AOS 018: 선택 접근 권한 [아니오] 선택`, async ({ driver }) => {
-    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD);
+    const udid = getDriverUdid(driver);
+    resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD, udid);
     try {
         await driver.terminateApp(TWD);
     } catch {}
@@ -221,20 +229,22 @@ test(`Native AOS 019: 권한 허용 안내에서 [설정] 선택`, async ({ driv
     expect(msg).toContain(`[STG] T world`);
     await driver.pause(1000);
     // 마지막에 위치 권한 다시 허용
-    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_FINE_LOCATION"]);
-    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_COARSE_LOCATION"]);
+    const udid = getDriverUdid(driver);
+    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_FINE_LOCATION"], udid);
+    adbShell(["pm", "grant", TWD, "android.permission.ACCESS_COARSE_LOCATION"], udid);
     await driver.back().catch(() => {});
 });
 
 test(`Native AOS 020: GPS OFF 상태로 로그인 후 메인 하단 매장찾기 선택`, async ({ driver }) => {
-    adbShell(["settings", "put", "secure", "location_mode", "0"]); // OFF
+    const udid = getDriverUdid(driver);
+    adbShell(["settings", "put", "secure", "location_mode", "0"], udid); // OFF
     await driver.pause(5000);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="com.google.android.gms:id/alertTitle"]`)) {
         await safeClick(driver, `//android.widget.Button[@resource-id="android:id/button2"]`);
     }
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);
     await driver.pause(1000);
-    const isLogIn = await isVisible(driver, logout).catch(() => false);
+    const isLogIn = await isVisible(driver, logout);
     if (!isLogIn) {
         await safeClick(driver, `//android.view.View[@content-desc="로그인 해주세요 "]`);
         await safeClick(driver, `//android.widget.Button[@text="본인 확인된 T ID pleasep@naver.com 010-8832-0456 로 로그인"]`);
@@ -249,5 +259,5 @@ test(`Native AOS 020: GPS OFF 상태로 로그인 후 메인 하단 매장찾기
     }
     const msg = await readText(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`);
     expect(msg).toContain(`위치`);
-    adbShell(["settings", "put", "secure", "location_mode", "3"]); // ON
+    adbShell(["settings", "put", "secure", "location_mode", "3"], udid); // ON
 });
