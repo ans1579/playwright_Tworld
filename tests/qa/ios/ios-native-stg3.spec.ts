@@ -9,8 +9,6 @@ import {
   logout,
   saveFailureScreenshot,
 } from "./ios-native-stg.shared";
-import { addValue } from "node_modules/webdriverio/build/commands/element";
-import { SSO_ID } from "../aos/aos-native-stg.shared";
 
 test.use({ bundleId: TWD });
 

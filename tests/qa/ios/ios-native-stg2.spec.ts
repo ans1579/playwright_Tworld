@@ -29,6 +29,10 @@ test(`Native iOS 037: 공유하기 2`, async ({ driver }) => {
     await driver.pause(1000);
     await safeClick(driver, `//XCUIElementTypeButton[@name="조르기 요청"]`);
     expect(await waitVisible(driver, `//XCUIElementTypeNavigationBar[@name="UIActivityContentView"]/XCUIElementTypeOther`)).toBeTruthy();
+    await driver.pause(1000);
+    if (await isVisible(driver, `//XCUIElementTypeImage[@name="UICloseButtonBackground"]`)) {
+        await safeClick(driver, `//XCUIElementTypeImage[@name="UICloseButtonBackground"]`);
+    }
 });
 
 test(`Native iOS 044: 영문 디폴트 설정`, async ({ driver }) => {
@@ -167,7 +171,6 @@ test.describe(`Native iOS 080`, () => {
         let shown = await isVisible(driver, `//XCUIElementTypeStaticText[@name="기기 설정"]`);
         if (!shown) {
             await safeClick(driver, `//XCUIElementTypeLink[@name="보관함 열기 MY"]`);
-            await clickPass(driver, `//XCUIElementTypeLink[@name="보관함 열기 MY"]`);
             await safeClick(driver, `//XCUIElementTypeButton[@name="설정 열기"]`);
             await safeClick(driver, `//XCUIElementTypeStaticText[@name="AI 추천 서비스 알림 설정"]`);
             const aiSwitch = await waitVisible(driver, `//XCUIElementTypeSwitch[@name="AI 추천 서비스 알림 설정"]`);

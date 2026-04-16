@@ -48,18 +48,30 @@ function makeSessionKey(options: SessionKeyOptions): string {
 }
 
 function createIosDriverManager(options: SessionKeyOptions): DriverManager {
-    const mgr = new DriverManager(() => ({
-        hostname: options.appiumHost,
-        port: options.appiumPort,
-        path: options.appiumPath,
-        capabilities: makeIosCaps(options.bundleId, {
-            udid: options.udid,
-            wdaLocalPort: options.wdaLocalPort,
+    const mgr = new DriverManager(
+        () => ({
+            hostname: options.appiumHost,
+            port: options.appiumPort,
+            path: options.appiumPath,
+            capabilities: makeIosCaps(options.bundleId, {
+                udid: options.udid,
+                wdaLocalPort: options.wdaLocalPort,
+            }),
+            logLevel: 'error',
+            // iOS는 WDA cold start 시간이 길 수 있어 기본값을 완화한다.
+            connectionRetryTimeout: Number(process.env.IOS_APPIUM_CONNECTION_RETRY_TIMEOUT ?? process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 120000),
+            connectionRetryCount: Number(process.env.IOS_APPIUM_CONNECTION_RETRY_COUNT ?? process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 1),
         }),
-        logLevel: 'error',
-        connectionRetryTimeout: Number(process.env.APPIUM_CONNECTION_RETRY_TIMEOUT ?? 15000),
-        connectionRetryCount: Number(process.env.APPIUM_CONNECTION_RETRY_COUNT ?? 0),
-    }));
+        undefined,
+        {
+            sessionCreateTimeoutMs: Number(process.env.IOS_APPIUM_SESSION_CREATE_TIMEOUT_MS ?? process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? 180000),
+            sessionRecreateTimeoutMs: Number(process.env.IOS_APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? 180000),
+            sessionCreateAttempts: Number(process.env.IOS_APPIUM_SESSION_CREATE_ATTEMPTS ?? process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? 2),
+            sessionRecreateAttempts: Number(process.env.IOS_APPIUM_SESSION_RECREATE_ATTEMPTS ?? process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? 2),
+            createRetryDelayMs: Number(process.env.IOS_APPIUM_SESSION_CREATE_RETRY_DELAY_MS ?? process.env.APPIUM_SESSION_CREATE_RETRY_DELAY_MS ?? 2000),
+            recreateRetryDelayMs: Number(process.env.IOS_APPIUM_SESSION_RECREATE_RETRY_DELAY_MS ?? process.env.APPIUM_SESSION_RECREATE_RETRY_DELAY_MS ?? 2500),
+        }
+    );
 
     return mgr;
 }

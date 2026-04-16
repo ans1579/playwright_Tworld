@@ -344,6 +344,29 @@ test(`Native iOS 072: TWD / TDS 각 채널에 맞는 넛징 메세지 노출 확
     expect(tdsMsg).toContain(tdsNudgeName);
 });
 
+test(`Native iOS 073: AI Layer 진입`, async ({ driver }) => {
+    await safeClick(driver, aiBtn);
+    await driver.pause(5000);
+    expect(await isVisible(driver, aiAssert)).toBe(true);
+});
+
+test(`Native iOS 074: AI Layer 종료`, async ({ driver }) => {
+    await safeClick(driver, aiBtn);
+    await driver.pause(5000);
+    await waitVisible(driver, aiAssert);
+    if (await isVisible(driver, aiClose)) {
+        await safeClick(driver, aiClose);
+    }
+    await driver.pause(2000);
+    await waitVisible(driver, `//XCUIElementTypeLink[@name="T World tworld"]`);
+    const visible = await driver
+        .$(aiAssert)
+        .isDisplayed()
+        .catch(() => false);
+
+    expect(visible).toBe(false);
+});
+
 test(`Native iOS 077: Type1 화면 진입 및 스크롤링, 닫힘 위치 확인`, async ({ driver }) => {
     await safeClick(driver, aiBtn);
     await driver.pause(5000);

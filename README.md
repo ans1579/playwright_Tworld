@@ -88,10 +88,10 @@ npx playwright install
 2. `npm global install permission denied 해결`
 3. `appium uiautomator2 xcuitest driver install`
 
-Appium CLI 설치:
+Appium CLI 설치 (권장: Appium 3.x, 현재 검증 버전 3.3.0):
 
 ```bash
-npm i -g appium@3.2.0
+npm i -g appium@3.3.0
 ```
 
 드라이버 설치:
@@ -184,6 +184,7 @@ npm run env:versions
 
 - UDID 1: `00008140-001C09881E80801C`
 - UDID 2: `00008030-0009316A2EDA802E`
+- Bundle ID: `com.sktelecom.miniTworld.ad.stg`
 - Appium: `5005`, `5006`
 - WDA: `8102`, `8103`
 
@@ -287,6 +288,21 @@ appium --address 127.0.0.1 --port 5005 --base-path / --log-level info
 ```bash
 cd /Users/p214425/automation/playwright
 npm run test:qa:ios
+```
+
+## 5-4. iOS 2번 단말 단독 실행
+
+터미널 1:
+
+```bash
+appium --address 127.0.0.1 --port 5006 --base-path / --log-level info
+```
+
+터미널 2:
+
+```bash
+cd /Users/p214425/automation/playwright
+npm run test:qa:ios2
 ```
 
 ---
@@ -405,6 +421,14 @@ QA_IOS2_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-2
 2. 해당 단말 연결 상태 확인 (`adb devices`, `xcrun xcdevice list`)
 3. Appium 서버 재시작
 4. 실패 케이스만 `-g`로 재실행
+5. iOS는 아래 환경변수로 타임아웃을 완화해서 재시도
+
+```bash
+IOS_APPIUM_SESSION_CREATE_TIMEOUT_MS=240000 \
+IOS_APPIUM_CONNECTION_RETRY_TIMEOUT=180000 \
+IOS_APPIUM_CONNECTION_RETRY_COUNT=2 \
+npx playwright test tests/qa/ios/ios-native-stg4.spec.ts -c qa.config.ts --project=qa-ios-2 -g "Native iOS 073|Native iOS 074"
+```
 
 ## 8-4. `A session is either terminated or not started`
 

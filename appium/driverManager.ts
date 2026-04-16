@@ -28,24 +28,57 @@ export function isSessionDeadError(e: unknown): boolean {
 // Backward compatibility
 export const isUia2DeadError = isSessionDeadError;
 
+type DriverManagerOptions = {
+  sessionCreateTimeoutMs?: number;
+  sessionRecreateTimeoutMs?: number;
+  sessionCreateAttempts?: number;
+  sessionRecreateAttempts?: number;
+  createRetryDelayMs?: number;
+  recreateRetryDelayMs?: number;
+};
+
 export class DriverManager {
   private driver: Browser | null = null;
   private createInFlight: Promise<Browser> | null = null;
   private createInFlightPhase: 'create' | 'recreate' | null = null;
-  private readonly sessionCreateTimeoutMs = Number(process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? 60000);
-  private readonly sessionRecreateTimeoutMs = Number(process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? 60000);
-  private readonly sessionCreateAttempts = Math.max(1, Number(process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? 2));
-  private readonly sessionRecreateAttempts = Math.max(1, Number(process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? 2));
-  private readonly createRetryDelayMs = Math.max(0, Number(process.env.APPIUM_SESSION_CREATE_RETRY_DELAY_MS ?? 1500));
-  private readonly recreateRetryDelayMs = Math.max(0, Number(process.env.APPIUM_SESSION_RECREATE_RETRY_DELAY_MS ?? 2000));
+  private readonly sessionCreateTimeoutMs: number;
+  private readonly sessionRecreateTimeoutMs: number;
+  private readonly sessionCreateAttempts: number;
+  private readonly sessionRecreateAttempts: number;
+  private readonly createRetryDelayMs: number;
+  private readonly recreateRetryDelayMs: number;
 
   constructor(
     private makeRemoteOpts: () => any,
     private hooks?: {
       beforeCreate?: (phase: 'create' | 'recreate') => Promise<void> | void;
       onCreateError?: (phase: 'create' | 'recreate', attempt: number, error: unknown) => Promise<void> | void;
-    }
-  ) {}
+    },
+    options: DriverManagerOptions = {}
+  ) {
+    this.sessionCreateTimeoutMs = Number(
+      options.sessionCreateTimeoutMs ?? process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? 60000
+    );
+    this.sessionRecreateTimeoutMs = Number(
+      options.sessionRecreateTimeoutMs ?? process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? 60000
+    );
+    this.sessionCreateAttempts = Math.max(
+      1,
+      Number(options.sessionCreateAttempts ?? process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? 2)
+    );
+    this.sessionRecreateAttempts = Math.max(
+      1,
+      Number(options.sessionRecreateAttempts ?? process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? 2)
+    );
+    this.createRetryDelayMs = Math.max(
+      0,
+      Number(options.createRetryDelayMs ?? process.env.APPIUM_SESSION_CREATE_RETRY_DELAY_MS ?? 1500)
+    );
+    this.recreateRetryDelayMs = Math.max(
+      0,
+      Number(options.recreateRetryDelayMs ?? process.env.APPIUM_SESSION_RECREATE_RETRY_DELAY_MS ?? 2000)
+    );
+  }
 
   private sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));

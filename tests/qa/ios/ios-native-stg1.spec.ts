@@ -2,7 +2,7 @@ import { test, expect } from "@appium/fixtures.ios";
 import { isVisible, safeClick, waitVisible } from "@tests/_shared/actions/ui";
 import { tapCellWithScroll } from "@tests/_shared/actions/scroll";
 import { swipeByPercent } from "@tests/_shared/gestures/ios";
-import { TESTFLIGHT, SETTINGS_BUNDLE_ID, TWD, defaultBeforeEach, logout, saveFailureScreenshot, waitUntilInstalledAndActivated } from "./ios-native-stg.shared";
+import { SETTINGS_BUNDLE_ID, TWD, defaultBeforeEach, logout, saveFailureScreenshot } from "./ios-native-stg.shared";
 
 test.use({ bundleId: TWD });
 
