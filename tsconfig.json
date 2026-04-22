@@ -1,15 +1,12 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@appium/*": ["appium/*"],
-      "@utils/*": ["utils/*"],
       "@tests/*": ["tests/*"],
-      "@flows/*": ["flows/*"],
-      "@_shared/*": ["_shared/*"],
+      "@_shared/*": ["_shared/*"]
     },
-
     "target": "ES2020",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",

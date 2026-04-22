@@ -56,19 +56,24 @@ export class DriverManager {
     },
     options: DriverManagerOptions = {}
   ) {
+    const defaultCreateTimeoutMs = process.platform === 'win32' ? 120000 : 60000;
+    const defaultRecreateTimeoutMs = process.platform === 'win32' ? 120000 : 60000;
+    const defaultCreateAttempts = process.platform === 'win32' ? 3 : 2;
+    const defaultRecreateAttempts = process.platform === 'win32' ? 3 : 2;
+
     this.sessionCreateTimeoutMs = Number(
-      options.sessionCreateTimeoutMs ?? process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? 60000
+      options.sessionCreateTimeoutMs ?? process.env.APPIUM_SESSION_CREATE_TIMEOUT_MS ?? defaultCreateTimeoutMs
     );
     this.sessionRecreateTimeoutMs = Number(
-      options.sessionRecreateTimeoutMs ?? process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? 60000
+      options.sessionRecreateTimeoutMs ?? process.env.APPIUM_SESSION_RECREATE_TIMEOUT_MS ?? defaultRecreateTimeoutMs
     );
     this.sessionCreateAttempts = Math.max(
       1,
-      Number(options.sessionCreateAttempts ?? process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? 2)
+      Number(options.sessionCreateAttempts ?? process.env.APPIUM_SESSION_CREATE_ATTEMPTS ?? defaultCreateAttempts)
     );
     this.sessionRecreateAttempts = Math.max(
       1,
-      Number(options.sessionRecreateAttempts ?? process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? 2)
+      Number(options.sessionRecreateAttempts ?? process.env.APPIUM_SESSION_RECREATE_ATTEMPTS ?? defaultRecreateAttempts)
     );
     this.createRetryDelayMs = Math.max(
       0,

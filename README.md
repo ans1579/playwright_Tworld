@@ -25,7 +25,8 @@
 
 ## 2-1. OS 권장
 
-- macOS (iOS 실기기 테스트 때문에 사실상 필수)
+- Android QA: Windows 10/11, macOS 모두 가능
+- iOS QA: macOS 필수
 
 ## 2-2. Node / npm
 
@@ -53,7 +54,7 @@ npm -v
 프로젝트로 이동:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 ```
 
 의존성 설치:
@@ -71,7 +72,7 @@ npm install
 ## 2-3. Playwright 설치
 
 패키지는 이미 `devDependencies`에 있으므로 `npm ci`로 설치됩니다.
-브라우저 기반 API/E2E를 돌릴 가능성이 있으면 추가 실행:
+브라우저 설치가 필요한 경우에만 추가 실행:
 
 ```bash
 npx playwright install
@@ -250,7 +251,7 @@ appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.
 터미널 2:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 npm run test:qa:aos
 ```
 
@@ -271,7 +272,7 @@ appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.
 터미널 3:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 npm run test:qa:aos:2
 ```
 
@@ -286,7 +287,7 @@ appium --address 127.0.0.1 --port 5005 --base-path / --log-level info
 터미널 2:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 npm run test:qa:ios
 ```
 
@@ -301,7 +302,7 @@ appium --address 127.0.0.1 --port 5006 --base-path / --log-level info
 터미널 2:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 npm run test:qa:ios2
 ```
 
@@ -312,7 +313,7 @@ npm run test:qa:ios2
 작업 경로:
 
 ```bash
-cd /Users/p214425/automation/playwright
+cd <repo-root>/playwright
 ```
 
 전체 QA:
@@ -348,23 +349,13 @@ npm run test:qa:ios2
 AOS stg1~4만:
 
 ```bash
-npx playwright test \
-  tests/qa/aos/aos-native-stg1.spec.ts \
-  tests/qa/aos/aos-native-stg2.spec.ts \
-  tests/qa/aos/aos-native-stg3.spec.ts \
-  tests/qa/aos/aos-native-stg4.spec.ts \
-  -c qa.config.ts --project=qa-aos
+npx playwright test tests/qa/aos/aos-native-stg1.spec.ts tests/qa/aos/aos-native-stg2.spec.ts tests/qa/aos/aos-native-stg3.spec.ts tests/qa/aos/aos-native-stg4.spec.ts -c qa.config.ts --project=qa-aos
 ```
 
 iOS stg1~4만:
 
 ```bash
-npx playwright test \
-  tests/qa/ios/ios-native-stg1.spec.ts \
-  tests/qa/ios/ios-native-stg2.spec.ts \
-  tests/qa/ios/ios-native-stg3.spec.ts \
-  tests/qa/ios/ios-native-stg4.spec.ts \
-  -c qa.config.ts --project=qa-ios
+npx playwright test tests/qa/ios/ios-native-stg1.spec.ts tests/qa/ios/ios-native-stg2.spec.ts tests/qa/ios/ios-native-stg3.spec.ts tests/qa/ios/ios-native-stg4.spec.ts -c qa.config.ts --project=qa-ios
 ```
 
 특정 케이스만 실행 (`-g`):
@@ -415,6 +406,12 @@ adb devices
 QA_IOS2_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-2
 ```
 
+Windows PowerShell:
+
+```powershell
+$env:QA_IOS2_FORCE='1'; npx playwright test -c qa.config.ts --project=qa-ios-2
+```
+
 ## 8-3. `세션 create 타임아웃(...)`
 
 1. Appium 서버 포트가 맞는지 확인 (`5001/5002/5005/5006`)
@@ -424,10 +421,13 @@ QA_IOS2_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-2
 5. iOS는 아래 환경변수로 타임아웃을 완화해서 재시도
 
 ```bash
-IOS_APPIUM_SESSION_CREATE_TIMEOUT_MS=240000 \
-IOS_APPIUM_CONNECTION_RETRY_TIMEOUT=180000 \
-IOS_APPIUM_CONNECTION_RETRY_COUNT=2 \
-npx playwright test tests/qa/ios/ios-native-stg4.spec.ts -c qa.config.ts --project=qa-ios-2 -g "Native iOS 073|Native iOS 074"
+IOS_APPIUM_SESSION_CREATE_TIMEOUT_MS=240000 IOS_APPIUM_CONNECTION_RETRY_TIMEOUT=180000 IOS_APPIUM_CONNECTION_RETRY_COUNT=2 npx playwright test tests/qa/ios/ios-native-stg4.spec.ts -c qa.config.ts --project=qa-ios-2 -g "Native iOS 073|Native iOS 074"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:IOS_APPIUM_SESSION_CREATE_TIMEOUT_MS='240000'; $env:IOS_APPIUM_CONNECTION_RETRY_TIMEOUT='180000'; $env:IOS_APPIUM_CONNECTION_RETRY_COUNT='2'; npx playwright test tests/qa/ios/ios-native-stg4.spec.ts -c qa.config.ts --project=qa-ios-2 -g "Native iOS 073|Native iOS 074"
 ```
 
 ## 8-4. `A session is either terminated or not started`

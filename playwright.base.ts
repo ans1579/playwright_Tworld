@@ -2,7 +2,7 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 
 export const commonConfig: PlaywrightTestConfig = {
   testDir: './tests',
-  timeout: Number(process.env.E2E_TIMEOUT ?? 21_600_000),
+  timeout: Number(process.env.QA_TIMEOUT ?? 21_600_000),
   expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1,

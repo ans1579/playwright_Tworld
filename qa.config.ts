@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import { execSync } from 'node:child_process';
 import { commonConfig, makeReporter } from './playwright.base';
+import { isAndroidDeviceConnectedByAdb } from './appium/adb.util';
 import { IOS_UDID_1, IOS_UDID_2 } from './appium/ios/env.ios';
 import {
   ANDROID_UDID_1,
@@ -52,26 +53,28 @@ function isIosDeviceConnected(udid: string): boolean {
 
 function isAndroidDeviceConnected(udid: string): boolean {
   if (!udid) return false;
-  try {
-    const out = execSync('adb devices', {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    return out
-      .split('\n')
-      .some((line) => line.trim().startsWith(`${udid}\tdevice`));
-  } catch {
-    return false;
-  }
+  return isAndroidDeviceConnectedByAdb(udid);
 }
+
+const iosSupportedHost = process.platform === 'darwin';
+const forceIos1 = process.env.QA_IOS1_FORCE === '1';
+const disableIos1 =
+  process.env.QA_IOS1_DISABLE === '1' ||
+  (!iosSupportedHost && process.env.QA_IOS_ALLOW_ON_WINDOWS !== '1');
+const canUseIos1 = iosSupportedHost && isIosDeviceConnected(IOS_UDID_1);
+const enableIos1 = !disableIos1 && (forceIos1 || canUseIos1);
 
 const forceIos2 = process.env.QA_IOS2_FORCE === '1';
 const disableIos2 = process.env.QA_IOS2_DISABLE === '1';
-const canUseSecondDevice = IOS_UDID_2 !== IOS_UDID_1 && isIosDeviceConnected(IOS_UDID_2);
-const enableIos2 = !disableIos2 && (forceIos2 || canUseSecondDevice);
+const canUseSecondDevice = iosSupportedHost && IOS_UDID_2 !== IOS_UDID_1 && isIosDeviceConnected(IOS_UDID_2);
+const enableIos2 = enableIos1 && !disableIos2 && (forceIos2 || canUseSecondDevice);
 
 const projects: any[] = [
-  {
+  // iOS 프로젝트는 macOS 호스트 + 단말 연결 시에만 기본 활성화
+];
+
+if (enableIos1) {
+  projects.push({
     name: 'qa-ios',
     testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
     retries: IOS_RETRIES,
@@ -84,8 +87,15 @@ const projects: any[] = [
       appiumPath: IOS_APPIUM_PATH,
       wdaLocalPort: IOS_WDA_LOCAL_PORT_1,
     } as any,
-  },
-];
+  });
+} else {
+  const reason = !iosSupportedHost
+    ? '비-macOS 호스트'
+    : disableIos1
+      ? 'QA_IOS1_DISABLE=1'
+      : `단말 미연결(udid=${IOS_UDID_1 || '미설정'})`;
+  console.log(`[qa.config] qa-ios 자동 비활성화 (${reason})`);
+}
 
 if (enableIos2) {
   projects.push({
@@ -103,7 +113,7 @@ if (enableIos2) {
     } as any,
   });
 } else {
-  console.log(`[qa.config] qa-ios-2 자동 비활성화 (udid=${IOS_UDID_2})`);
+  console.log(`[qa.config] qa-ios-2 자동 비활성화 (udid=${IOS_UDID_2 || '미설정'})`);
 }
 
 projects.push({

@@ -1,6 +1,7 @@
 import type { Browser } from "webdriverio";
 import { execFileSync } from "node:child_process";
 import { isVisible, safeClick } from "@tests/_shared/actions/ui";
+import { resolveAdbPath } from "@appium/adb.util";
 
 export const TWD = `Com.sktelecom.minit.ad.stg`;
 const CHROME_PACKAGE = `com.android.chrome`;
@@ -23,7 +24,7 @@ export function getDriverUdid(driver: Browser): string {
 }
 
 export function adbShell(args: string[], udid: string) {
-    const adbPath = process.env.ADB_PATH || "adb";
+    const adbPath = resolveAdbPath();
     execFileSync(adbPath, ["-s", udid, "shell", ...args], { stdio: "ignore" });
 }
 
