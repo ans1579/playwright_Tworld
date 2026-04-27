@@ -52,7 +52,6 @@ export function makeAosCaps(overrides: AosCapsOverrides = {}) {
     'appium:autoWebview': false,
     'appium:ensureWebviewsHavePages': true,
     'appium:chromedriverAutodownload': true,
-    'appium:recreateChromeDriverSessions': false,
     'appium:webviewConnectRetries': Number(process.env.AOS_WEBVIEW_CONNECT_RETRIES ?? 10),
     'appium:webviewConnectTimeout': Number(process.env.AOS_WEBVIEW_CONNECT_TIMEOUT ?? 20000),
     'appium:systemPort': systemPort,
