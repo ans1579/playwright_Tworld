@@ -5,7 +5,6 @@ export const ANDROID_UDID_3 = String(process.env.ANDROID_UDID_3 ?? "R3CY40JZR5K"
 export const ANDROID_UDID_4 = String(process.env.ANDROID_UDID_4 ?? "330066dcc982c38d").trim(); // 와이드
 export const ANDROID_UDID = ANDROID_UDID_1;
 export const APP_PACKAGE = process.env.AOS_APP_PACKAGE ?? `Com.sktelecom.minit.ad.stg`;
-// export const APP_PACKAGE = process.env.AOS_APP_PACKAGE ?? `com.sktelecom.minit`;
 export const APP_ACTIVITY = process.env.AOS_APP_ACTIVITY ?? `com.sktelecom.minit.scene.intro.IntroActivity`;
 // Appium 서버 설정
 export const APPIUM_HOST = process.env.AOS_APPIUM_HOST ?? "127.0.0.1";

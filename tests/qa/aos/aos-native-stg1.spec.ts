@@ -97,6 +97,9 @@ test(`Native AOS 011: 앱 최초 실행 - 접근 권한 안내`, async ({ driver
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
     }
+    if (await isVisible(driver, `//android.widget.Button[@text="다시보지 않음"]`)) {
+        await safeClick(driver, `//android.widget.Button[@text="다시보지 않음"]`);
+    }
     expect(await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleText"]`)).toBe(true);
     await driver.pause(2000);
 });
@@ -110,6 +113,9 @@ test(`Native AOS 012: 앱 최초 실행 - 전화 권한`, async ({ driver }) => 
     await driver.activateApp(TWD);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
+    }
+    if (await isVisible(driver, `//android.widget.Button[@text="다시보지 않음"]`)) {
+        await safeClick(driver, `//android.widget.Button[@text="다시보지 않음"]`);
     }
     await waitVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleText"]`);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/next"]`);
@@ -129,6 +135,9 @@ test(`Native AOS 013: 앱 최초 실행 - 알림 권한`, async ({ driver }) => 
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
     }
+    if (await isVisible(driver, `//android.widget.Button[@text="다시보지 않음"]`)) {
+        await safeClick(driver, `//android.widget.Button[@text="다시보지 않음"]`);
+    }
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/next"]`);
     await safeClick(driver, `//android.widget.Button[@resource-id="com.android.permissioncontroller:id/permission_allow_button"]`);
     const permissionMsg = await waitVisible(driver, `//android.widget.TextView[@resource-id="com.android.permissioncontroller:id/permission_message"]`);
@@ -146,6 +155,9 @@ test(`Native AOS 014: 앱 최초 실행 - 주소록 권한`, async ({ driver }) 
     await driver.activateApp(TWD);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
+    }
+    if (await isVisible(driver, `//android.widget.Button[@text="다시보지 않음"]`)) {
+        await safeClick(driver, `//android.widget.Button[@text="다시보지 않음"]`);
     }
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/next"]`);
     await safeClick(driver, `//android.widget.Button[@resource-id="com.android.permissioncontroller:id/permission_allow_button"]`);
@@ -173,6 +185,9 @@ test(`Native AOS 017: 위치 권한`, async ({ driver }) => {
     await driver.activateApp(TWD);
     if (await isVisible(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/titleTxt"]`)) {
         await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/cancel"]`);
+    }
+    if (await isVisible(driver, `//android.widget.Button[@text="다시보지 않음"]`)) {
+        await safeClick(driver, `//android.widget.Button[@text="다시보지 않음"]`);
     }
     await driver.pause(3000);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);

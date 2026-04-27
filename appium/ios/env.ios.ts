@@ -2,7 +2,7 @@
 // iOS 공통 기본값(qa.config.ts의 project.use가 우선)
 
 // 단말 UDID
-export const IOS_UDID_1 = String(process.env.IOS_UDID_1 ?? "00008140-000A24D90A8B001C").trim();
+export const IOS_UDID_1 = String(process.env.IOS_UDID_1 ?? "00008140-000A24D90A8B001C").trim(); // iPhone 16
 export const IOS_UDID_2 = String(process.env.IOS_UDID_2 ?? "544ff4fea20e6bbea629f84f33fed9b363076ff7").trim(); // 8 plus
 export const IOS_UDID_3 = String(process.env.IOS_UDID_3 ?? "00008101-000948D602A2001E").trim(); // 12 프로맥스
 export const IOS_UDID_4 = String(process.env.IOS_UDID_4 ?? "").trim();
