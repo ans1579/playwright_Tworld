@@ -25,9 +25,9 @@ function app(name, rawArgs) {
 
 module.exports = {
   apps: [
-    // iOS (2대) - Appium Port + WDA Port 모두 유니크
+    // iOS (4대) - Appium Port + WDA Port 모두 유니크
     app('appium-iOS-01', [
-      '-p 15002',
+      '-p 5005',
       '-pa /',
       '--driver-xcuitest-webdriveragent-port 8102',
       '--log-timestamp',
@@ -36,7 +36,7 @@ module.exports = {
       '--relaxed-security',
     ]),
     app('appium-iOS-02', [
-      '-p 15003',
+      '-p 5006',
       '-pa /',
       '--driver-xcuitest-webdriveragent-port 8103',
       '--log-timestamp',
@@ -44,10 +44,28 @@ module.exports = {
       '--allow-cors',
       '--relaxed-security',
     ]),
+    app('appium-iOS-03', [
+      '-p 5007',
+      '-pa /',
+      '--driver-xcuitest-webdriveragent-port 8104',
+      '--log-timestamp',
+      '--local-timezone',
+      '--allow-cors',
+      '--relaxed-security',
+    ]),
+    app('appium-iOS-04', [
+      '-p 5008',
+      '-pa /',
+      '--driver-xcuitest-webdriveragent-port 8105',
+      '--log-timestamp',
+      '--local-timezone',
+      '--allow-cors',
+      '--relaxed-security',
+    ]),
 
-    // Android (2대) - Appium Port 유니크
+    // Android (4대) - Appium Port 유니크
     app('appium-AOS-01', [
-      '--port 4723',
+      '--port 5001',
       '-pa /',
       '--log-timestamp',
       '--local-timezone',
@@ -55,7 +73,23 @@ module.exports = {
       '--relaxed-security',
     ]),
     app('appium-AOS-02', [
-      '--port 4724',
+      '--port 5002',
+      '-pa /',
+      '--log-timestamp',
+      '--local-timezone',
+      '--allow-cors',
+      '--relaxed-security',
+    ]),
+    app('appium-AOS-03', [
+      '--port 5003',
+      '-pa /',
+      '--log-timestamp',
+      '--local-timezone',
+      '--allow-cors',
+      '--relaxed-security',
+    ]),
+    app('appium-AOS-04', [
+      '--port 5004',
       '-pa /',
       '--log-timestamp',
       '--local-timezone',

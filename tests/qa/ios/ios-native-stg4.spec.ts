@@ -35,6 +35,7 @@ test(`Native iOS 064: 비로그인 상태에서 넛징 선택`, async ({ driver 
         await safeClick(driver, `//XCUIElementTypeOther[@name="홈 탭"]`);
     }
     await safeClick(driver, `//XCUIElementTypeButton[@name="nudge"]`);
+    await driver.pause(3000);
 
     // 웹뷰 전환
     await getAndSwitchToWebviewIos(driver);

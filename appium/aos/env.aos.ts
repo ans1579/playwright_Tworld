@@ -1,8 +1,8 @@
 // 단말 UDID / APP_PACKAGE / APP_ACTIVITY
-export const ANDROID_UDID_1 = String(process.env.ANDROID_UDID_1 ?? "R3CX60JDSMP").trim();
-export const ANDROID_UDID_2 = String(process.env.ANDROID_UDID_2 ?? "R39WB004NRY").trim();
-export const ANDROID_UDID_3 = String(process.env.ANDROID_UDID_3 ?? "").trim();
-export const ANDROID_UDID_4 = String(process.env.ANDROID_UDID_4 ?? "").trim();
+export const ANDROID_UDID_1 = String(process.env.ANDROID_UDID_1 ?? "R3CW206MA0Y").trim(); // 23 울트라
+export const ANDROID_UDID_2 = String(process.env.ANDROID_UDID_2 ?? "R3CN80F903N").trim(); // Z 플립
+export const ANDROID_UDID_3 = String(process.env.ANDROID_UDID_3 ?? "R3CY40JZR5K").trim(); // 폴드 7
+export const ANDROID_UDID_4 = String(process.env.ANDROID_UDID_4 ?? "330066dcc982c38d").trim(); // 와이드
 export const ANDROID_UDID = ANDROID_UDID_1;
 export const APP_PACKAGE = process.env.AOS_APP_PACKAGE ?? `Com.sktelecom.minit.ad.stg`;
 // export const APP_PACKAGE = process.env.AOS_APP_PACKAGE ?? `com.sktelecom.minit`;

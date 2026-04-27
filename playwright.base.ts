@@ -18,6 +18,7 @@ export function makeReporter(outputFolder: string): PlaywrightTestConfig['report
   return [
     ['list'],
     ['html', { open: 'never', outputFolder }],
+    ['./reporters/qa-summary.cjs', { outputFolder }],
     ['./reporters/open-report-background.cjs', { outputFolder }],
   ];
 }

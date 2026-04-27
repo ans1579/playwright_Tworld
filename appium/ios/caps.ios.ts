@@ -6,9 +6,29 @@ type IosCapsOverrides = {
   wdaLocalPort?: number;
 };
 
+function parseWebviewBundleIds(raw: string | undefined): string[] {
+  const value = String(raw ?? '').trim();
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.map((v) => String(v).trim()).filter(Boolean);
+    }
+  } catch {}
+
+  return value
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 export function makeIosCaps(bundleId: string, overrides: IosCapsOverrides = {}) {
   const udid = overrides.udid ?? IOS_UDID;
   const wdaLocalPort = overrides.wdaLocalPort ?? WDA_LOCAL_PORT;
+  const additionalWebviewBundleIds = parseWebviewBundleIds(
+    process.env.IOS_ADDITIONAL_WEBVIEW_BUNDLE_IDS
+  );
 
   const caps: Record<string, any> = {
     platformName: 'iOS',
@@ -37,6 +57,19 @@ export function makeIosCaps(bundleId: string, overrides: IosCapsOverrides = {}) 
     'appium:wdaEventloopIdleDelay': 0,
     'appium:disableAutomaticScreenshots': true,
     'appium:simpleIsVisibleCheck': true,
+
+    // ✅ iOS Hybrid(WebView) 연결 안정화
+    // - 늦게 뜨는 WEBVIEW를 기다리기 위한 재시도/타임아웃 설정
+    'appium:autoWebview': process.env.IOS_AUTO_WEBVIEW === '1',
+    'appium:webviewConnectRetries': Number(process.env.IOS_WEBVIEW_CONNECT_RETRIES ?? 20),
+    'appium:webviewConnectTimeout': Number(process.env.IOS_WEBVIEW_CONNECT_TIMEOUT ?? 20000),
+    'appium:webkitResponseTimeout': Number(process.env.IOS_WEBKIT_RESPONSE_TIMEOUT ?? 20000),
+    'appium:includeSafariInWebviews': process.env.IOS_INCLUDE_SAFARI_IN_WEBVIEWS === '1',
   };
+
+  if (additionalWebviewBundleIds.length > 0) {
+    caps['appium:additionalWebviewBundleIds'] = additionalWebviewBundleIds;
+  }
+
   return caps;
 }

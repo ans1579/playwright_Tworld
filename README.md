@@ -169,6 +169,61 @@ npm run env:versions
 2. Xcode / iOS Developer Mode / iOS 실기기 인증
 3. Appium 글로벌 설치 권한 이슈(npm global 권한)
 
+## 2-9. 압축본( `node_modules` 제외 )을 받은 뒤 바로 실행하는 순서
+
+팀원에게 `.zip` 전달받았을 때는 아래 순서 그대로 진행하면 됩니다.
+
+1. 압축 해제
+
+```bash
+mkdir -p ~/qa-run
+unzip <받은파일>.zip -d ~/qa-run
+```
+
+2. 프로젝트 폴더 이동
+
+```bash
+cd ~/qa-run/playwright
+```
+
+3. 의존성 설치 (`node_modules` 복구)
+
+```bash
+npm ci
+```
+
+`npm ci` 실패 시:
+
+```bash
+npm install
+```
+
+4. 설치/버전 확인
+
+```bash
+npm run env:versions
+```
+
+5. 디바이스 연결 확인
+
+```bash
+adb devices
+xcrun xcdevice list
+```
+
+6. Appium 서버 실행 (필요 포트만)
+  - AOS: `5001~5004`
+  - iOS: `5005~5008`
+
+7. 스모크 1건 확인
+
+```bash
+npx playwright test tests/qa/aos/aos-native-stg1.spec.ts -c qa.config.ts --project=qa-aos -g "Native AOS 005"
+```
+
+8. 대상 병렬 실행
+  - 아래 5장(실행 시나리오) 명령어 사용
+
 ---
 
 ## 3. 이 프로젝트의 기본 포트/단말 설정
@@ -177,24 +232,22 @@ npm run env:versions
 
 ### Android (`appium/aos/env.aos.ts`)
 
-- UDID 1: `R3CX60JDSMP`
-- UDID 2: `R39WB004NRY`
+- UDID 1~4: `ANDROID_UDID_1` ~ `ANDROID_UDID_4`
 - Appium: `5001`, `5002`, `5003`, `5004`
 
 ### iOS (`appium/ios/env.ios.ts` + `qa.config.ts`)
 
-- UDID 1: `00008140-001C09881E80801C`
-- UDID 2: `00008030-0009316A2EDA802E`
+- UDID 1~4: `IOS_UDID_1` ~ `IOS_UDID_4`
 - Bundle ID: `com.sktelecom.miniTworld.ad.stg`
-- Appium: `5005`, `5006`
-- WDA: `8102`, `8103`
+- Appium: `5005`, `5006`, `5007`, `5008`
+- WDA: `8102`, `8103`, `8104`, `8105`
 
 원하면 환경변수로 덮어쓸 수 있습니다.
 
 예시:
 
 ```bash
-ANDROID_UDID_1=<내_안드_UDID> IOS_UDID_1=<내_아이폰_UDID> npm run test:qa
+ANDROID_UDID_1=<내_안드_UDID_1> ANDROID_UDID_2=<내_안드_UDID_2> ANDROID_UDID_3=<내_안드_UDID_3> ANDROID_UDID_4=<내_안드_UDID_4> IOS_UDID_1=<내_아이폰_UDID_1> IOS_UDID_2=<내_아이폰_UDID_2> IOS_UDID_3=<내_아이폰_UDID_3> IOS_UDID_4=<내_아이폰_UDID_4> npm run test:qa:8way
 ```
 
 ---
@@ -217,6 +270,18 @@ Android 2번 단말 (5002):
 appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5002 --base-path / --log-level info
 ```
 
+Android 3번 단말 (5003):
+
+```bash
+appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5003 --base-path / --log-level info
+```
+
+Android 4번 단말 (5004):
+
+```bash
+appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5004 --base-path / --log-level info
+```
+
 ## 4-2. iOS 서버
 
 iOS 1번 단말 (5005):
@@ -231,6 +296,18 @@ iOS 2번 단말 (5006):
 appium --address 127.0.0.1 --port 5006 --base-path / --log-level info
 ```
 
+iOS 3번 단말 (5007):
+
+```bash
+appium --address 127.0.0.1 --port 5007 --base-path / --log-level info
+```
+
+iOS 4번 단말 (5008):
+
+```bash
+appium --address 127.0.0.1 --port 5008 --base-path / --log-level info
+```
+
 팁:
 
 1. 포트당 터미널 1개를 열어서 유지하세요.
@@ -240,70 +317,46 @@ appium --address 127.0.0.1 --port 5006 --base-path / --log-level info
 
 ## 5. 가장 쉬운 실행 순서
 
-## 5-1. Android 1대만 실행
+실행 전 공통:
+1. `cd <repo-root>/playwright`
+2. 필요한 Appium 서버 실행 (`5001~5008`)
 
-터미널 1:
+## 5-1. 8대 병렬 (AOS 4 + iOS 4)
 
 ```bash
-appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5001 --base-path / --log-level info
+npm run test:qa:8way
 ```
 
-터미널 2:
+## 5-2. Android 4대만 병렬
 
 ```bash
-cd <repo-root>/playwright
-npm run test:qa:aos
+npm run test:qa:aos:4
 ```
 
-## 5-2. Android 2대 병렬 실행
-
-터미널 1:
+## 5-3. iOS 4대만 병렬
 
 ```bash
-appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5001 --base-path / --log-level info
+npm run test:qa:ios:4
 ```
 
-터미널 2:
+## 5-4. 단말 1대씩 단독 실행
+
+Android:
 
 ```bash
-appium --allow-insecure '*:chromedriver_autodownload,*:adb_shell' --address 127.0.0.1 --port 5002 --base-path / --log-level info
+npm run test:qa -- --project=qa-aos
+npm run test:qa -- --project=qa-aos-2
+npm run test:qa -- --project=qa-aos-3
+npm run test:qa -- --project=qa-aos-4
 ```
 
-터미널 3:
+iOS:
 
 ```bash
-cd <repo-root>/playwright
-npm run test:qa:aos:2
-```
-
-## 5-3. iOS 1대 실행
-
-터미널 1:
-
-```bash
-appium --address 127.0.0.1 --port 5005 --base-path / --log-level info
-```
-
-터미널 2:
-
-```bash
-cd <repo-root>/playwright
-npm run test:qa:ios
-```
-
-## 5-4. iOS 2번 단말 단독 실행
-
-터미널 1:
-
-```bash
-appium --address 127.0.0.1 --port 5006 --base-path / --log-level info
-```
-
-터미널 2:
-
-```bash
-cd <repo-root>/playwright
-npm run test:qa:ios2
+npm run test:qa -- --project=qa-ios
+npm run test:qa -- --project=qa-ios-2
+npm run test:qa -- --project=qa-ios-3
+npm run test:qa -- --project=qa-ios-4
 ```
 
 ---
@@ -322,28 +375,40 @@ cd <repo-root>/playwright
 npm run test:qa
 ```
 
-Android QA 전체:
+8대 병렬 (AOS 4 + iOS 4):
 
 ```bash
-npm run test:qa:aos
+npm run test:qa:8way
 ```
 
-Android 2대 병렬 QA:
+Android 4대 병렬:
 
 ```bash
-npm run test:qa:aos:2
+npm run test:qa:aos:4
 ```
 
-iOS QA(1번):
+iOS 4대 병렬:
 
 ```bash
-npm run test:qa:ios
+npm run test:qa:ios:4
 ```
 
-iOS QA(2번 강제):
+Android 단독 실행:
 
 ```bash
-npm run test:qa:ios2
+npm run test:qa -- --project=qa-aos
+npm run test:qa -- --project=qa-aos-2
+npm run test:qa -- --project=qa-aos-3
+npm run test:qa -- --project=qa-aos-4
+```
+
+iOS 단독 실행:
+
+```bash
+npm run test:qa -- --project=qa-ios
+npm run test:qa -- --project=qa-ios-2
+npm run test:qa -- --project=qa-ios-3
+npm run test:qa -- --project=qa-ios-4
 ```
 
 AOS stg1~4만:
@@ -397,13 +462,20 @@ adb start-server
 adb devices
 ```
 
-## 8-2. `qa-ios-2 자동 비활성화`
+## 8-2. `qa-ios-* 자동 비활성화`
 
-2번 iOS 단말이 연결되지 않았거나 UDID 불일치입니다.
-강제로 실행하려면:
+iOS 슬롯(1~4) 중 해당 단말이 연결되지 않았거나 UDID/포트가 중복일 때 자동 비활성화됩니다.
+강제로 실행하려면(예: 2번):
 
 ```bash
 QA_IOS2_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-2
+```
+
+3번/4번 예시:
+
+```bash
+QA_IOS3_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-3
+QA_IOS4_FORCE=1 npx playwright test -c qa.config.ts --project=qa-ios-4
 ```
 
 Windows PowerShell:
@@ -414,7 +486,7 @@ $env:QA_IOS2_FORCE='1'; npx playwright test -c qa.config.ts --project=qa-ios-2
 
 ## 8-3. `세션 create 타임아웃(...)`
 
-1. Appium 서버 포트가 맞는지 확인 (`5001/5002/5005/5006`)
+1. Appium 서버 포트가 맞는지 확인 (`5001~5008`)
 2. 해당 단말 연결 상태 확인 (`adb devices`, `xcrun xcdevice list`)
 3. Appium 서버 재시작
 4. 실패 케이스만 `-g`로 재실행
@@ -450,7 +522,7 @@ npm run test:qa -- --project=qa-aos
 
 1. Appium 서버는 단말 수만큼 포트 분리
 2. `systemPort`, `mjpegServerPort`, `chromedriverPorts` 충돌 금지
-3. 처음에는 1대 안정화 후 2대, 4대로 확장
+3. 처음에는 1대 안정화 후 2대, 4대, 8대 순서로 확장
 4. 장애 분석 시 Appium 로그와 Playwright trace를 같이 확인
 
 ---

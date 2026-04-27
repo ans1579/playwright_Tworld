@@ -32,6 +32,7 @@ export function makeAosCaps(overrides: AosCapsOverrides = {}) {
     'appium:appWaitActivity': '*',
     'appium:appWaitForLaunch': false,
     'appium:appWaitDuration': 90000,
+    'appium:autoLaunch': false,
 
     'appium:noReset': true,
     'appium:fullReset': false,

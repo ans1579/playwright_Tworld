@@ -339,7 +339,7 @@ export const test = base.extend<Fixtures>({
         }
     },
     // 기본은 원래 WDIO 체이너블 driver 유지
-    driver: async({ driverManager, appPackage }, use) => {
+    driver: async({ driverManager, appPackage }, use, testInfo) => {
         const recoveryActivatePauseMs = Number(process.env.AOS_RECOVERY_ACTIVATE_PAUSE_MS ?? 1500);
         const driver = await driverManager.ensureAlive();
         (driver as any).__runWithRecovery = <T>(action: (d: Browser) => Promise<T>) =>
@@ -351,6 +351,19 @@ export const test = base.extend<Fixtures>({
                 }
             });
         await use(driver);
+
+        if (testInfo.status !== testInfo.expectedStatus) {
+            try {
+                const screenshotPath = testInfo.outputPath(`failure-${Date.now()}.png`);
+                await driver.saveScreenshot(screenshotPath);
+                await testInfo.attach('failure-screenshot', {
+                    path: screenshotPath,
+                    contentType: 'image/png',
+                });
+            } catch (error: any) {
+                console.warn(`[aos.fixture] 실패 스크린샷 저장 실패: ${error?.message ?? error}`);
+            }
+        }
     },
     // 필요 구간에서만 복구 래퍼 사용
     runWithRecovery: async({ driverManager }, use) => {

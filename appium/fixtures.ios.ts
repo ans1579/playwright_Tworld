@@ -129,13 +129,26 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         await use(mgr);
     },
 
-    driver: async ({ driverManager }, use) => {
+    driver: async ({ driverManager }, use, testInfo) => {
         const driver = await driverManager.ensureAlive();
         (driver as any).__runWithRecovery = <T>(action: (d: Browser) => Promise<T>) =>
             driverManager.runWithRecovery(action);
         // iOS 클릭 후 내부 애니메이션 대기시간을 줄여 전체 템포 개선
         await (driver as any).updateSettings?.({ animationCoolOffTimeout: 0 }).catch(() => {});
         await use(driver);
+
+        if (testInfo.status !== testInfo.expectedStatus) {
+            try {
+                const screenshotPath = testInfo.outputPath(`failure-${Date.now()}.png`);
+                await driver.saveScreenshot(screenshotPath);
+                await testInfo.attach('failure-screenshot', {
+                    path: screenshotPath,
+                    contentType: 'image/png',
+                });
+            } catch (error: any) {
+                console.warn(`[ios.fixture] 실패 스크린샷 저장 실패: ${error?.message ?? error}`);
+            }
+        }
     },
 });
 

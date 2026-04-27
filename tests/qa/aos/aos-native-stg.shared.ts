@@ -1,10 +1,11 @@
 import type { Browser } from "webdriverio";
 import { execFileSync } from "node:child_process";
 import { isVisible, safeClick } from "@tests/_shared/actions/ui";
-import { resolveAdbPath } from "@appium/adb.util";
+import { adbText, resolveAdbPath } from "@appium/adb.util";
 
 export const TWD = `Com.sktelecom.minit.ad.stg`;
 const CHROME_PACKAGE = `com.android.chrome`;
+const SAMSUNG_BROWSER_PACKAGE = `com.sec.android.app.sbrowser`;
 export const logout = `//android.widget.TextView[@text="로그아웃"]`;
 export const aiBtn = `//android.view.ViewGroup[@resource-id="Com.sktelecom.minit.ad.stg:id/aiButtonArea"]`;
 export const nudge = `//android.widget.Button[@text="nudge"]`;
@@ -56,6 +57,36 @@ export function forceStopChrome(udid: string) {
     } catch {}
 }
 
+export function forceStopSamsungBrowser(udid: string) {
+    try {
+        adbShell(["am", "force-stop", SAMSUNG_BROWSER_PACKAGE], udid);
+    } catch {}
+}
+
+function isExternalBrowserFocused(udid: string): boolean {
+    const displaysOut = adbText(udid, ["shell", "dumpsys", "window", "displays"], 5000) ?? "";
+    const windowsOut = adbText(udid, ["shell", "dumpsys", "window", "windows"], 5000) ?? "";
+    const focusDump = `${displaysOut}\n${windowsOut}`.toLowerCase();
+    return focusDump.includes("com.sec.android.app.sbrowser") || focusDump.includes("com.android.chrome");
+}
+
+async function recoverFocusFromExternalBrowser(driver: Browser, udid: string) {
+    if (!isExternalBrowserFocused(udid)) return;
+
+    console.warn(`[focus] 외부 브라우저 포커스 감지 -> back + 앱 재활성화 시도`);
+    await driver.back().catch(() => {});
+    await driver.pause(600);
+    await driver.activateApp(TWD);
+    await driver.pause(1200);
+
+    if (!isExternalBrowserFocused(udid)) return;
+    console.warn(`[focus] 외부 브라우저 포커스 지속 -> 2차 복구(back + activateApp)`);
+    await driver.back().catch(() => {});
+    await driver.pause(600);
+    await driver.activateApp(TWD);
+    await driver.pause(1200);
+}
+
 export async function closeIntroIfPresent(driver: Browser) {
     const maxRestarts = 2;
 
@@ -99,10 +130,12 @@ export async function defaultBeforeEach(
     const udid = getDriverUdid(driver);
 
     forceStopChrome(udid);
+    forceStopSamsungBrowser(udid);
 
     if (!skipRestart) {
         await restartTwdApp(driver, 2000);
     }
+    await recoverFocusFromExternalBrowser(driver, udid);
     await closeIntroIfPresent(driver);
     await driver.pause(3000);
 }

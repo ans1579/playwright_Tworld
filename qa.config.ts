@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 import { execSync } from 'node:child_process';
 import { commonConfig, makeReporter } from './playwright.base';
 import { isAndroidDeviceConnectedByAdb } from './appium/adb.util';
-import { IOS_UDID_1, IOS_UDID_2 } from './appium/ios/env.ios';
+import { IOS_UDID_1, IOS_UDID_2, IOS_UDID_3, IOS_UDID_4 } from './appium/ios/env.ios';
 import {
   ANDROID_UDID_1,
   ANDROID_UDID_2,
@@ -32,8 +32,12 @@ const IOS_APPIUM_HOST = process.env.IOS_APPIUM_HOST ?? '127.0.0.1';
 const IOS_APPIUM_PATH = process.env.IOS_APPIUM_PATH ?? '/';
 const IOS_APPIUM_PORT_1 = Number(process.env.IOS_APPIUM_PORT_1 ?? 5005);
 const IOS_APPIUM_PORT_2 = Number(process.env.IOS_APPIUM_PORT_2 ?? 5006);
+const IOS_APPIUM_PORT_3 = Number(process.env.IOS_APPIUM_PORT_3 ?? 5007);
+const IOS_APPIUM_PORT_4 = Number(process.env.IOS_APPIUM_PORT_4 ?? 5008);
 const IOS_WDA_LOCAL_PORT_1 = Number(process.env.IOS_WDA_LOCAL_PORT_1 ?? 8102);
 const IOS_WDA_LOCAL_PORT_2 = Number(process.env.IOS_WDA_LOCAL_PORT_2 ?? 8103);
+const IOS_WDA_LOCAL_PORT_3 = Number(process.env.IOS_WDA_LOCAL_PORT_3 ?? 8104);
+const IOS_WDA_LOCAL_PORT_4 = Number(process.env.IOS_WDA_LOCAL_PORT_4 ?? 8105);
 const IOS_RETRIES = 1;
 const AOS_RETRIES = 1;
 const QA_CASE_TIMEOUT_MS = Number(process.env.QA_CASE_TIMEOUT_MS ?? 210000);
@@ -57,63 +61,110 @@ function isAndroidDeviceConnected(udid: string): boolean {
 }
 
 const iosSupportedHost = process.platform === 'darwin';
-const forceIos1 = process.env.QA_IOS1_FORCE === '1';
-const disableIos1 =
-  process.env.QA_IOS1_DISABLE === '1' ||
-  (!iosSupportedHost && process.env.QA_IOS_ALLOW_ON_WINDOWS !== '1');
-const canUseIos1 = iosSupportedHost && isIosDeviceConnected(IOS_UDID_1);
-const enableIos1 = !disableIos1 && (forceIos1 || canUseIos1);
+const iosHostBlocked = !iosSupportedHost && process.env.QA_IOS_ALLOW_ON_WINDOWS !== '1';
 
-const forceIos2 = process.env.QA_IOS2_FORCE === '1';
-const disableIos2 = process.env.QA_IOS2_DISABLE === '1';
-const canUseSecondDevice = iosSupportedHost && IOS_UDID_2 !== IOS_UDID_1 && isIosDeviceConnected(IOS_UDID_2);
-const enableIos2 = enableIos1 && !disableIos2 && (forceIos2 || canUseSecondDevice);
+type IosProjectSlot = {
+  name: string;
+  udid: string;
+  appiumPort: number;
+  wdaLocalPort: number;
+  force: boolean;
+  disable: boolean;
+  disableEnvName: string;
+};
+
+const iosSlots: IosProjectSlot[] = [
+  {
+    name: 'qa-ios',
+    udid: IOS_UDID_1,
+    appiumPort: IOS_APPIUM_PORT_1,
+    wdaLocalPort: IOS_WDA_LOCAL_PORT_1,
+    force: process.env.QA_IOS1_FORCE === '1',
+    disable: process.env.QA_IOS1_DISABLE === '1',
+    disableEnvName: 'QA_IOS1_DISABLE',
+  },
+  {
+    name: 'qa-ios-2',
+    udid: IOS_UDID_2,
+    appiumPort: IOS_APPIUM_PORT_2,
+    wdaLocalPort: IOS_WDA_LOCAL_PORT_2,
+    force: process.env.QA_IOS2_FORCE === '1',
+    disable: process.env.QA_IOS2_DISABLE === '1',
+    disableEnvName: 'QA_IOS2_DISABLE',
+  },
+  {
+    name: 'qa-ios-3',
+    udid: IOS_UDID_3,
+    appiumPort: IOS_APPIUM_PORT_3,
+    wdaLocalPort: IOS_WDA_LOCAL_PORT_3,
+    force: process.env.QA_IOS3_FORCE === '1',
+    disable: process.env.QA_IOS3_DISABLE === '1',
+    disableEnvName: 'QA_IOS3_DISABLE',
+  },
+  {
+    name: 'qa-ios-4',
+    udid: IOS_UDID_4,
+    appiumPort: IOS_APPIUM_PORT_4,
+    wdaLocalPort: IOS_WDA_LOCAL_PORT_4,
+    force: process.env.QA_IOS4_FORCE === '1',
+    disable: process.env.QA_IOS4_DISABLE === '1',
+    disableEnvName: 'QA_IOS4_DISABLE',
+  },
+];
 
 const projects: any[] = [
   // iOS 프로젝트는 macOS 호스트 + 단말 연결 시에만 기본 활성화
 ];
 
-if (enableIos1) {
-  projects.push({
-    name: 'qa-ios',
-    testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
-    retries: IOS_RETRIES,
-    timeout: QA_CASE_TIMEOUT_MS,
-    workers: 1,
-    use: {
-      udid: IOS_UDID_1,
-      appiumHost: IOS_APPIUM_HOST,
-      appiumPort: IOS_APPIUM_PORT_1,
-      appiumPath: IOS_APPIUM_PATH,
-      wdaLocalPort: IOS_WDA_LOCAL_PORT_1,
-    } as any,
-  });
-} else {
-  const reason = !iosSupportedHost
-    ? '비-macOS 호스트'
-    : disableIos1
-      ? 'QA_IOS1_DISABLE=1'
-      : `단말 미연결(udid=${IOS_UDID_1 || '미설정'})`;
-  console.log(`[qa.config] qa-ios 자동 비활성화 (${reason})`);
-}
+const enabledIosUdids = new Set<string>();
+const enabledIosAppiumPorts = new Set<number>();
+const enabledIosWdaPorts = new Set<number>();
 
-if (enableIos2) {
+for (const slot of iosSlots) {
+  let reason = '';
+
+  if (iosHostBlocked) {
+    reason = '비-macOS 호스트';
+  } else if (slot.disable) {
+    reason = `${slot.disableEnvName}=1`;
+  } else if (!slot.udid) {
+    reason = 'UDID 미설정';
+  } else if (enabledIosUdids.has(slot.udid)) {
+    reason = `중복 UDID(${slot.udid})`;
+  } else if (enabledIosAppiumPorts.has(slot.appiumPort)) {
+    reason = `중복 Appium 포트(${slot.appiumPort})`;
+  } else if (enabledIosWdaPorts.has(slot.wdaLocalPort)) {
+    reason = `중복 WDA 포트(${slot.wdaLocalPort})`;
+  } else {
+    const connected = isIosDeviceConnected(slot.udid);
+    if (!slot.force && !connected) {
+      reason = `단말 미연결(udid=${slot.udid})`;
+    }
+  }
+
+  if (reason) {
+    console.log(`[qa.config] ${slot.name} 자동 비활성화 (${reason})`);
+    continue;
+  }
+
+  enabledIosUdids.add(slot.udid);
+  enabledIosAppiumPorts.add(slot.appiumPort);
+  enabledIosWdaPorts.add(slot.wdaLocalPort);
+
   projects.push({
-    name: 'qa-ios-2',
+    name: slot.name,
     testMatch: /tests\/qa\/ios\/.*\.spec\.ts/,
     retries: IOS_RETRIES,
     timeout: QA_CASE_TIMEOUT_MS,
     workers: 1,
     use: {
-      udid: IOS_UDID_2,
+      udid: slot.udid,
       appiumHost: IOS_APPIUM_HOST,
-      appiumPort: IOS_APPIUM_PORT_2,
+      appiumPort: slot.appiumPort,
       appiumPath: IOS_APPIUM_PATH,
-      wdaLocalPort: IOS_WDA_LOCAL_PORT_2,
+      wdaLocalPort: slot.wdaLocalPort,
     } as any,
   });
-} else {
-  console.log(`[qa.config] qa-ios-2 자동 비활성화 (udid=${IOS_UDID_2 || '미설정'})`);
 }
 
 projects.push({

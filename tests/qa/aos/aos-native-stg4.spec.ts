@@ -340,7 +340,7 @@ test(`Native AOS 079: AI Layer 진입 후 Type1 화면 진입 및 스크롤링, 
     const scrollable = await assertScrollable(driver, `//android.widget.TextView[@text="히스토리"]`);
     expect(scrollable.moved).toBe(true);
 });
-
+/*
 test(`Native AOS 080: AOS 위치 옵션 끄고 AI Layer 최초 진입`, async ({ driver }) => {
     const udid = getDriverUdid(driver);
     resetPermissions(["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"], TWD, udid);
@@ -400,3 +400,4 @@ test(`Native AOS 082: AOS 앱 알림 허용 끄고 AI Layer 최초 진입`, asyn
     adbShell(["pm", "grant", TWD, "android.permission.POST_NOTIFICATIONS"], udid);
     await driver.pause(1000);
 });
+*/

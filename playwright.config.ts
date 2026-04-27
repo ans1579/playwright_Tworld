@@ -38,7 +38,7 @@ if (!includeIosProjects) {
 // 여기에는 QA 통합 프로젝트를 둔다.
 export default defineConfig({
   ...commonConfig,
-  outputDir: 'test-output/test-results',
-  reporter: makeReporter('test-output/reports/latest'),
+  outputDir: 'test-output/test-results/qa',
+  reporter: makeReporter('test-output/reports/qa/latest'),
   projects,
 });

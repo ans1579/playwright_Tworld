@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
     "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "paths": {
-      "@appium/*": ["appium/*"],
-      "@tests/*": ["tests/*"],
-      "@_shared/*": ["_shared/*"]
+      "@appium/*": ["./appium/*"],
+      "@tests/*": ["./tests/*"],
+      "@_shared/*": ["./tests/_shared/*"]
     },
     "target": "ES2020",
     "module": "NodeNext",
@@ -15,5 +14,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["**/*.ts", "tests/_shared/**/*.d.ts"]
+  "include": ["*.ts", "appium/**/*.ts", "tests/**/*.ts", "reporters/**/*.ts"],
+  "exclude": ["node_modules", "test-output"]
 }

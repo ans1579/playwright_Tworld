@@ -4,7 +4,7 @@ const { spawn } = require('node:child_process');
 
 class OpenReportBackgroundReporter {
   constructor(options = {}) {
-    this.outputFolder = options.outputFolder || 'test-output/reports/latest';
+    this.outputFolder = options.outputFolder || 'test-output/reports/qa/latest';
   }
 
   async onEnd() {
@@ -13,11 +13,16 @@ class OpenReportBackgroundReporter {
     // 필요 시 명시적으로 비활성화
     if (process.env.PW_NO_BG_REPORT === '1') return;
 
-    const reportIndex = path.resolve(process.cwd(), this.outputFolder, 'index.html');
-    if (!fs.existsSync(reportIndex)) return;
+    const reportDir = path.resolve(process.cwd(), this.outputFolder);
+    const preferred = [
+      path.join(reportDir, 'qa-summary.html'),
+      path.join(reportDir, 'index.html'),
+    ];
+    const reportFile = preferred.find((p) => fs.existsSync(p));
+    if (!reportFile) return;
 
-    const reportUrl = `file://${reportIndex.replace(/ /g, '%20')}`;
-    const reportPrefix = `file://${path.dirname(reportIndex).replace(/ /g, '%20')}/`;
+    const reportUrl = `file://${reportFile.replace(/ /g, '%20')}`;
+    const reportPrefix = `file://${path.dirname(reportFile).replace(/ /g, '%20')}/`;
 
     // 요구사항:
     // 1) 리포트 탭이 있으면 그 탭 URL만 갱신

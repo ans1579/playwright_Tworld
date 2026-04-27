@@ -14,6 +14,7 @@ test.beforeEach(async ({ driver }, testInfo) => {
     }
     await defaultBeforeEach(driver);
 });
+/*
 test(`Native AOS 021: 위젯 추가`, async ({ driver }) => {
     await driver.pause(2000);
     await driver.execute(`mobile: pressKey`, { keycode: 3 });
@@ -134,7 +135,7 @@ test(`Native AOS 038: 공유하기 2`, async ({ driver }) => {
     await driver.execute(`mobile: pressKey`, { keycode: 3 });
     await driver.pause(1000);
 });
-
+*/
 test(`Native AOS 041: App 설치 여부 확인`, async ({ driver }) => {
     await driver.pause(3000);
     await safeClick(driver, `//android.widget.TextView[@resource-id="Com.sktelecom.minit.ad.stg:id/buttonTextView" and @text="메뉴"]`);

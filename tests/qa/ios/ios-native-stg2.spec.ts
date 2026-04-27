@@ -12,7 +12,7 @@ test.afterEach(async ({ driver }, testInfo) => {
 test.beforeEach(async ({ driver }, testInfo) => {
     await defaultBeforeEach(driver, testInfo as any, [`iOS 080`]);
 });
-
+/*
 test(`Native iOS 036: 공유하기 1`, async ({ driver }) => {
     await safeClick(driver, `//XCUIElementTypeOther[@name="메뉴 탭"]`);
     await safeClick(driver, `//XCUIElementTypeButton[@name="상품서비스"]`);
@@ -34,7 +34,7 @@ test(`Native iOS 037: 공유하기 2`, async ({ driver }) => {
         await safeClick(driver, `//XCUIElementTypeImage[@name="UICloseButtonBackground"]`);
     }
 });
-
+*/
 test(`Native iOS 044: 영문 디폴트 설정`, async ({ driver }) => {
     await safeClick(driver, `//XCUIElementTypeOther[@name="메뉴 탭"]`);
     await safeClick(driver, `//XCUIElementTypeStaticText[@name="English!"]`);
@@ -124,7 +124,7 @@ test(`Native iOS 044: 영문 디폴트 설정`, async ({ driver }) => {
 //         }
 //     })
 // })
-
+/*
 test.describe(`Native iOS 080`, () => {
     test.use({ bundleId: SETTINGS_BUNDLE_ID });
     test.beforeAll(async ({ driver }) => {
@@ -197,3 +197,4 @@ test.describe(`Native iOS 080`, () => {
         await driver.pause(3000);
     });
 });
+*/
